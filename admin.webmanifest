@@ -1,0 +1,51 @@
+{
+  "name": "Aheera Admin — Operations Console",
+  "short_name": "Aheera Admin",
+  "description": "Aheera Pure Organic Dairy — Unified Operations, Household Dispatch & Partner Console",
+  "id": "aheera-admin-console-v2",
+  "start_url": "./admin.html?pwa=admin",
+  "scope": "./admin.html",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#FAF7F0",
+  "theme_color": "#FAF7F0",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Dispatch Run",
+      "url": "./admin.html?pwa=admin",
+      "description": "Daily morning & evening delivery runs"
+    },
+    {
+      "name": "Products & Stock",
+      "url": "./admin.html?pwa=admin",
+      "description": "Manage catalog products and inventory"
+    }
+  ]
+}
