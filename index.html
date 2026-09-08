@@ -2329,6 +2329,11 @@
     .dash-map-container.is-expanded #adminMap {
       height: 340px;
     }
+    @keyframes vehiclePulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.6); opacity: 0.2; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
     #adminMap .leaflet-control-zoom {
       border: none !important;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
@@ -9742,7 +9747,12 @@
       if (!mapEl || typeof L === 'undefined') return;
 
       const GIRIDIH_CENTER = [24.1860, 86.3050];
-      window.activeMap = L.map('adminMap', { center: GIRIDIH_CENTER, zoom: 14, attributionControl: false });
+      const initialPos = (window.lastStaffLocation && window.lastStaffLocation.lat)
+        ? [window.lastStaffLocation.lat, window.lastStaffLocation.lng]
+        : GIRIDIH_CENTER;
+      const initialZoom = (window.lastStaffLocation && window.lastStaffLocation.lat) ? 15 : 14;
+
+      window.activeMap = L.map('adminMap', { center: initialPos, zoom: initialZoom, attributionControl: false });
       
       const isLight = window.currentTheme === 'light';
       const tileStyle = isLight ? 'positron' : 'dark-matter-dark-grey';
@@ -9751,51 +9761,24 @@
         attribution: ''
       }).addTo(window.activeMap);
 
-      window.updateMapStops();
+      if (window.lastStaffLocation && window.lastStaffLocation.lat) {
+        if (typeof window.renderAgentGpsOnMap === 'function') {
+          window.renderAgentGpsOnMap(window.lastStaffLocation);
+        }
+      }
     };
 
     window.updateMapStops = function() {
       if (!window.activeMap) return;
-      window.mapHouseholdMarkers.forEach(m => window.activeMap.removeLayer(m));
-      window.mapHouseholdMarkers = [];
-      if (window.adminRoutePolyline) {
-        window.activeMap.removeLayer(window.adminRoutePolyline);
-        window.adminRoutePolyline = null;
+      if (Array.isArray(window.mapHouseholdMarkers)) {
+        window.mapHouseholdMarkers.forEach(m => {
+          try { window.activeMap.removeLayer(m); } catch(e) {}
+        });
+        window.mapHouseholdMarkers = [];
       }
-
-      const points = [];
-      window.households.forEach((h, idx) => {
-        const lat = h.lat || (24.1860 + (Math.sin(idx + 1) * 0.012));
-        const lng = h.lng || (86.3050 + (Math.cos(idx + 1) * 0.015));
-        const isDone = window.todayDeliveries[h.id] && window.todayDeliveries[h.id].status === 'delivered';
-        const color = isDone ? '#10B981' : '#F59E0B';
-        points.push([lat, lng]);
-
-        const marker = L.circleMarker([lat, lng], {
-          radius: 8, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.95
-        }).addTo(window.activeMap);
-
-        marker.bindPopup(`
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; color:#040D07; font-size:0.82rem; min-width:180px;">
-            <strong style="font-size:0.92rem; color:#09170E;">${h.name}</strong><br>
-            <div style="margin:4px 0; color:#4B5D51;"><i class="fa-solid fa-location-dot" style="color:#E04E4E;"></i> ${h.address}</div>
-            <div style="margin-bottom:6px;">Daily: <strong>${h.defaultQty || h.qty} L/day</strong> · <span style="font-weight:700; color:${color};">${isDone ? 'DELIVERED' : 'PENDING'}</span></div>
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; padding:4px 8px; background:#0B2314; color:#D4AF37; text-decoration:none; border-radius:6px; font-size:0.75rem; font-weight:700;">
-              <i class="fa-solid fa-diamond-turn-right"></i> Navigate
-            </a>
-          </div>
-        `);
-        window.mapHouseholdMarkers.push(marker);
-      });
-
-      // Draw multi-stop delivery circuit polyline
-      if (points.length > 1) {
-        window.adminRoutePolyline = L.polyline(points, {
-          color: '#2563EB',
-          weight: 4,
-          opacity: 0.9,
-          dashArray: '6, 8'
-        }).addTo(window.activeMap);
+      if (window.adminRoutePolyline) {
+        try { window.activeMap.removeLayer(window.adminRoutePolyline); } catch(e) {}
+        window.adminRoutePolyline = null;
       }
     };
 
@@ -9819,10 +9802,12 @@
       setTimeout(() => {
         if (window.activeMap) {
           window.activeMap.invalidateSize();
-          if (window.mapAgentMarker) {
+          if (window.lastStaffLocation && window.lastStaffLocation.lat) {
+            window.activeMap.setView([window.lastStaffLocation.lat, window.lastStaffLocation.lng], 16, { animate: true });
+          } else if (window.mapAgentMarker) {
             window.activeMap.setView(window.mapAgentMarker.getLatLng(), 16, { animate: true });
-          } else if (window.adminRoutePolyline) {
-            window.activeMap.fitBounds(window.adminRoutePolyline.getBounds(), { padding: [30, 30] });
+          } else {
+            window.activeMap.setView([24.1860, 86.3050], 14, { animate: true });
           }
         }
       }, 320);
@@ -12814,9 +12799,28 @@
         if (window.renderStaffHistoryUI && window.currentStaffTab === 'history') window.renderStaffHistoryUI();
       }, err => console.warn(err));
 
+      // Initialize staff location from local cache if available
+      try {
+        const cachedLoc = localStorage.getItem('aheera_last_staff_loc');
+        if (cachedLoc) {
+          window.lastStaffLocation = JSON.parse(cachedLoc);
+          if (typeof window.renderAgentGpsOnMap === 'function') window.renderAgentGpsOnMap(window.lastStaffLocation);
+        }
+      } catch(e) {}
+
       onSnapshot(doc(db, "artifacts", "aheera-milk", "public", "data", "state", "staff-location"), (snap) => {
-        if (snap.exists()) renderAgentGpsOnMap(snap.data());
+        if (snap.exists()) {
+          window.lastStaffLocation = snap.data();
+          if (typeof window.renderAgentGpsOnMap === 'function') window.renderAgentGpsOnMap(snap.data());
+        }
       }, err => console.warn(err));
+
+      getDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "state", "staff-location")).then(snap => {
+        if (snap.exists()) {
+          window.lastStaffLocation = snap.data();
+          if (typeof window.renderAgentGpsOnMap === 'function') window.renderAgentGpsOnMap(snap.data());
+        }
+      }).catch(() => {});
 
       // Realtime Products Collection Listener
       onSnapshot(collection(db, "artifacts", "aheera-milk", "public", "data", "products"), (snap) => {
@@ -13268,31 +13272,68 @@
       }).join('');
     }
 
-    function renderAgentGpsOnMap(locData) {
-      if (!window.activeMap || !locData || !locData.lat) return;
-      const pos = [locData.lat, locData.lng];
+    window.renderAgentGpsOnMap = function(locData) {
+      if (!locData || !locData.lat) return;
+      window.lastStaffLocation = locData;
+      try { localStorage.setItem('aheera_last_staff_loc', JSON.stringify(locData)); } catch(e) {}
 
-      if (!window.mapAgentMarker) {
-        const icon = L.divIcon({
-          className: 'custom-vehicle-pin',
-          html: `<div style="background:#D4AF37; border:2px solid #fff; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 16px #D4AF37; font-size:13px;"><i class="fa-solid fa-person-biking" style="color:#040D07;"></i></div>`,
-          iconSize: [26, 26]
-        });
-        window.mapAgentMarker = L.marker(pos, { icon }).addTo(window.activeMap);
-      } else {
-        window.mapAgentMarker.setLatLng(pos);
-      }
+      const pos = [locData.lat, locData.lng];
 
       const statusEl = document.getElementById('kpiStaffLocStatus');
       if (statusEl) statusEl.textContent = 'On Route';
       const ageEl = document.getElementById('kpiStaffLocAge');
-      if (ageEl) ageEl.textContent = 'GPS Active: Giridih';
+      if (ageEl) ageEl.textContent = 'GPS ACTIVE: GIRIDIH';
+
+      let timeStr = 'Live';
+      if (locData.updatedAt) {
+        try {
+          if (locData.updatedAt.seconds) {
+            timeStr = new Date(locData.updatedAt.seconds * 1000).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+          } else if (typeof locData.updatedAt === 'number') {
+            timeStr = new Date(locData.updatedAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+          } else {
+            timeStr = new Date(locData.updatedAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+          }
+        } catch(e) { timeStr = 'Live'; }
+      }
+
       const captionEl = document.getElementById('dashStaffLocCaption');
       if (captionEl) {
-        const timeStr = locData.updatedAt ? new Date(locData.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live';
         captionEl.textContent = 'Staff Live GPS: ' + timeStr;
       }
-    }
+
+      if (!window.activeMap || typeof L === 'undefined') return;
+
+      if (!window.mapAgentMarker) {
+        const icon = L.divIcon({
+          className: 'custom-vehicle-pin',
+          html: `
+            <div style="position:relative; width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
+              <span style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(16,185,129,0.35); animation:vehiclePulse 2s cubic-bezier(0.215,0.61,0.355,1) infinite;"></span>
+              <div style="position:relative; z-index:2; background:#10B981; border:2.5px solid #ffffff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 12px rgba(0,0,0,0.35); font-size:13px; color:#ffffff;">
+                <i class="fa-solid fa-person-biking"></i>
+              </div>
+            </div>
+          `,
+          iconSize: [34, 34],
+          iconAnchor: [17, 17]
+        });
+        window.mapAgentMarker = L.marker(pos, { icon }).addTo(window.activeMap);
+        window.mapAgentMarker.bindPopup(`
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; color:#040D07; font-size:0.82rem; min-width:180px; text-align:center; padding:4px;">
+            <div style="font-size:0.95rem; font-weight:800; color:#09170E; margin-bottom:2px;"><i class="fa-solid fa-person-biking" style="color:#10B981;"></i> Delivery Partner</div>
+            <div style="font-size:0.75rem; color:#4B5D51; margin-bottom:6px;">Last shared: <strong>${timeStr}</strong></div>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${pos[0]},${pos[1]}" target="_blank" style="display:inline-flex; align-items:center; gap:5px; padding:5px 10px; background:#0B2314; color:#D4AF37; text-decoration:none; border-radius:6px; font-size:0.75rem; font-weight:700;">
+              <i class="fa-solid fa-diamond-turn-right"></i> Open in Maps
+            </a>
+          </div>
+        `);
+      } else {
+        window.mapAgentMarker.setLatLng(pos);
+      }
+
+      window.activeMap.setView(pos, Math.max(window.activeMap.getZoom(), 15), { animate: true });
+    };
 
     // Global exports for tab navigation
     window.renderAdminStoreOrders = renderStoreOrdersUI;
