@@ -12,7 +12,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="manifest" href="./admin.webmanifest?v=2">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#FAF7F0">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAF7F0">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1A3828">
+  <meta name="theme-color" content="#1A3828">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Aheera Ops">
@@ -7735,8 +7737,10 @@
       document.documentElement.setAttribute('data-theme', theme);
 
       // Dynamically update status bar theme-color and color-scheme
+      // Dark mode uses #1A3828 (dark forest green, NOT near-black) so Android draws
+      // white system icons on the status bar instead of invisible dark ones.
       try {
-        const themeColor = isLight ? '#FAF7F0' : '#040D07';
+        const themeColor = isLight ? '#FAF7F0' : '#1A3828';
         document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', themeColor));
         let csMeta = document.querySelector('meta[name="color-scheme"]');
         if (!csMeta) {
@@ -9856,12 +9860,33 @@
       }
 
       // Check deliveries map for the selected date
-      let delMap = window.todayDeliveries;
-      if (window.logSelectedDate !== window.getTodayKey()) {
+      const isToday = window.logSelectedDate === window.getTodayKey();
+      let delMap = isToday ? window.todayDeliveries : {};
+
+      if (!isToday) {
+        // 1. Try localStorage cache first (instant render)
         try {
           const savedPast = localStorage.getItem('aheera_del_' + window.logSelectedDate);
-          delMap = savedPast ? JSON.parse(savedPast) : {};
+          if (savedPast) delMap = JSON.parse(savedPast);
         } catch(e) { delMap = {}; }
+        // 2. Also fetch from Firestore for the selected past date (async, re-renders when done)
+        if (window._firestoreLoadDailyLogDate !== window.logSelectedDate) {
+          window._firestoreLoadDailyLogDate = window.logSelectedDate;
+          const fetchDate = window.logSelectedDate;
+          Promise.resolve().then(async () => {
+            try {
+              const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js').catch(() => ({}));
+              if (!getDoc || !window._firestoreDb) return;
+              const snap = await getDoc(doc(window._firestoreDb, 'artifacts', 'aheera-milk', 'public', 'data', 'deliveries', fetchDate));
+              if (snap.exists()) {
+                const data = snap.data();
+                localStorage.setItem('aheera_del_' + fetchDate, JSON.stringify(data));
+                // Only re-render if user is still viewing the same date
+                if (window.logSelectedDate === fetchDate) window.loadDailyLogs();
+              }
+            } catch(e) { /* Firestore may not be available */ }
+          });
+        }
       }
 
       const morningHhs = window.households.filter(h => h.slot === 'morning' || h.slot === 'both');
@@ -12698,9 +12723,26 @@
         } catch(e) {}
       };
 
+      // Store db reference globally so the async Firestore fetch in loadDailyLogs can use it
+      window._firestoreDb = db;
+
       window.cloudSyncDeliveries = async function() {
         try {
-          await setDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "deliveries", window.logSelectedDate), window.todayDeliveries);
+          // Determine which deliveries map corresponds to the currently selected date.
+          // IMPORTANT: Never write today's data to a past date.
+          const todayKey = window.getTodayKey();
+          const syncDate = window.logSelectedDate;
+          let dataToSync;
+          if (syncDate === todayKey) {
+            dataToSync = window.todayDeliveries;
+          } else {
+            // Read the correct past-date map from localStorage
+            try {
+              const savedPast = localStorage.getItem('aheera_del_' + syncDate);
+              dataToSync = savedPast ? JSON.parse(savedPast) : {};
+            } catch(e) { dataToSync = {}; }
+          }
+          await setDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "deliveries", syncDate), dataToSync);
         } catch(e) {}
       };
 
