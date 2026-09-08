@@ -1,5 +1,5 @@
-// Aheera Store — Progressive Web App Service Worker v257.0
-const CACHE_NAME = 'aheera-cache-v258';
+// Aheera Store — Progressive Web App Service Worker v260.0
+const CACHE_NAME = 'aheera-cache-v260';
 const STATIC_ASSETS = [
   './',
   './index.html',

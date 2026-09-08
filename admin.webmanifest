@@ -2,13 +2,13 @@
   "name": "Aheera Admin — Operations Console",
   "short_name": "Aheera Admin",
   "description": "Aheera Pure Organic Dairy — Unified Operations, Household Dispatch & Partner Console",
-  "id": "aheera-admin-console-v2",
+  "id": "aheera-admin-console-v3",
   "start_url": "./admin.html?pwa=admin",
-  "scope": "./admin.html",
+  "scope": "./",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone", "minimal-ui", "window-controls-overlay"],
-  "background_color": "#0D2116",
-  "theme_color": "#1A3828",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#FAF7F0",
+  "theme_color": "#FAF7F0",
   "orientation": "portrait-primary",
   "icons": [
     {

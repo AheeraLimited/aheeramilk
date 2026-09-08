@@ -10,11 +10,11 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="shortcut icon" href="./favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-  <link rel="manifest" href="./admin.webmanifest?v=2">
+  <link rel="manifest" href="./admin.webmanifest?v=3">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAF7F0">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1A3828">
-  <meta name="theme-color" content="#1A3828">
+  <meta name="theme-color" content="#FAF7F0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Aheera Ops">
@@ -7629,7 +7629,11 @@
     };
 
     window.getTodayKey = function() {
-      return new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     };
 
     // State store
@@ -7646,7 +7650,7 @@
     window.mapAgentMarker = null;
     window.mapHouseholdMarkers = [];
     window.gpsWatchId = null;
-    window.logSelectedDate = new Date().toISOString().split('T')[0];
+    window.logSelectedDate = window.getTodayKey();
 
     const PIN_STAFF = '1234';
     const PIN_OWNER = '7050';
@@ -8720,7 +8724,7 @@
       window.updateStaffProgress();
       window.updateAdminKpis();
       window.loadDailyLogs();
-      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries();
+      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
     };
 
     window.undoStaffDelivery = function(hhId) {
@@ -8733,7 +8737,7 @@
       window.updateStaffProgress();
       window.updateAdminKpis();
       window.loadDailyLogs();
-      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries();
+      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
       if (window.currentStaffTab === 'history') window.renderStaffHistoryUI();
     };
 
@@ -9726,7 +9730,7 @@
       window.renderDashboard();
       window.renderStaffRouteCards();
       window.updateStaffProgress();
-      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries();
+      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
     };
 
     // Map Engine with Geoapify Themed Tiles & Multi-Stop Route Visualization
@@ -9842,6 +9846,7 @@
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       window.logSelectedDate = `${y}-${m}-${day}`;
+      window._lastLoadedFirestoreDailyLogDate = null;
       window.loadDailyLogs();
     };
 
@@ -9861,7 +9866,7 @@
 
       // Check deliveries map for the selected date
       const isToday = window.logSelectedDate === window.getTodayKey();
-      let delMap = isToday ? window.todayDeliveries : {};
+      let delMap = isToday ? (window.todayDeliveries || {}) : {};
 
       if (!isToday) {
         // 1. Try localStorage cache first (instant render)
@@ -9869,23 +9874,18 @@
           const savedPast = localStorage.getItem('aheera_del_' + window.logSelectedDate);
           if (savedPast) delMap = JSON.parse(savedPast);
         } catch(e) { delMap = {}; }
-        // 2. Also fetch from Firestore for the selected past date (async, re-renders when done)
-        if (window._firestoreLoadDailyLogDate !== window.logSelectedDate) {
-          window._firestoreLoadDailyLogDate = window.logSelectedDate;
-          const fetchDate = window.logSelectedDate;
-          Promise.resolve().then(async () => {
-            try {
-              const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js').catch(() => ({}));
-              if (!getDoc || !window._firestoreDb) return;
-              const snap = await getDoc(doc(window._firestoreDb, 'artifacts', 'aheera-milk', 'public', 'data', 'deliveries', fetchDate));
-              if (snap.exists()) {
-                const data = snap.data();
-                localStorage.setItem('aheera_del_' + fetchDate, JSON.stringify(data));
-                // Only re-render if user is still viewing the same date
-                if (window.logSelectedDate === fetchDate) window.loadDailyLogs();
+
+        // 2. Fetch from Firestore for the selected past date
+        const fetchDate = window.logSelectedDate;
+        if (window._lastLoadedFirestoreDailyLogDate !== fetchDate) {
+          window._lastLoadedFirestoreDailyLogDate = fetchDate;
+          if (typeof window.fetchFirestoreDeliveriesForDate === 'function') {
+            window.fetchFirestoreDeliveriesForDate(fetchDate).then(cloudData => {
+              if (cloudData && window.logSelectedDate === fetchDate) {
+                window.loadDailyLogs();
               }
-            } catch(e) { /* Firestore may not be available */ }
-          });
+            }).catch(() => {});
+          }
         }
       }
 
@@ -10027,7 +10027,7 @@
       window.renderStaffRouteCards();
       window.updateStaffProgress();
       window.updateAdminKpis();
-      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries();
+      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(window.logSelectedDate);
     };
 
     window.updateDailyLogQty = function(hhId, newQty) {
@@ -10058,6 +10058,7 @@
       window.renderStaffRouteCards();
       window.updateStaffProgress();
       window.updateAdminKpis();
+      if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(window.logSelectedDate);
     };
 
     // ── REPORTS & BILLS ENGINE (MATCHING DEPLOYED APP SCREENSHOT) ──
@@ -12701,7 +12702,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
-      getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp 
+      getFirestore, collection, doc, getDoc, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -12716,6 +12717,12 @@
       const app = initializeApp(firebaseConfig);
       db = getFirestore(app);
 
+      // Expose Firestore globals
+      window._firestoreDb = db;
+      window._firestoreDoc = doc;
+      window._firestoreGetDoc = getDoc;
+      window._firestoreSetDoc = setDoc;
+
       // Expose cloud sync bridges
       window.cloudSyncHouseholds = async function() {
         try {
@@ -12723,27 +12730,39 @@
         } catch(e) {}
       };
 
-      // Store db reference globally so the async Firestore fetch in loadDailyLogs can use it
-      window._firestoreDb = db;
-
-      window.cloudSyncDeliveries = async function() {
+      window.cloudSyncDeliveries = async function(targetDate) {
         try {
-          // Determine which deliveries map corresponds to the currently selected date.
-          // IMPORTANT: Never write today's data to a past date.
           const todayKey = window.getTodayKey();
-          const syncDate = window.logSelectedDate;
+          const syncDate = targetDate || window.logSelectedDate || todayKey;
           let dataToSync;
           if (syncDate === todayKey) {
-            dataToSync = window.todayDeliveries;
+            dataToSync = window.todayDeliveries || {};
           } else {
-            // Read the correct past-date map from localStorage
             try {
               const savedPast = localStorage.getItem('aheera_del_' + syncDate);
               dataToSync = savedPast ? JSON.parse(savedPast) : {};
             } catch(e) { dataToSync = {}; }
           }
           await setDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "deliveries", syncDate), dataToSync);
-        } catch(e) {}
+        } catch(e) {
+          console.warn("Cloud sync deliveries error:", e);
+        }
+      };
+
+      window.fetchFirestoreDeliveriesForDate = async function(dateKey) {
+        try {
+          if (!db) return null;
+          const snap = await getDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "deliveries", dateKey));
+          if (snap.exists()) {
+            const data = snap.data() || {};
+            localStorage.setItem('aheera_del_' + dateKey, JSON.stringify(data));
+            return data;
+          }
+          return null;
+        } catch(err) {
+          console.warn("Failed to fetch past deliveries from Firestore:", err);
+          return null;
+        }
       };
 
       window.cloudSyncSkips = async function() {
@@ -12752,6 +12771,13 @@
           await setDoc(doc(db, "artifacts", "aheera-milk", "public", "data", "skips", todayKey), window.todaySkips);
         } catch(e) {}
       };
+
+      // Trigger past date load if initialized on a past date
+      if (window.logSelectedDate && window.logSelectedDate !== window.getTodayKey()) {
+        window.fetchFirestoreDeliveriesForDate(window.logSelectedDate).then(data => {
+          if (data && window.loadDailyLogs) window.loadDailyLogs();
+        });
+      }
 
       // Realtime Listeners
       const todayKey = window.getTodayKey();
