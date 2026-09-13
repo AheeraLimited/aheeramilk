@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aheera Milk — Delivery Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --g1:#0B2416; --g2:#133320; --g3:#1C4A2E;
+  --gold:#C9973A; --gold-lt:#E8C06A; --gold-dim:#8A6520;
+  --glass:rgba(255,255,255,0.07); --glass-border:rgba(255,255,255,0.13);
+  --glass-hover:rgba(255,255,255,0.12); --glass-strong:rgba(255,255,255,0.15);
+  --cream:#F7F3EA; --cream2:#EDE6D6;
+  --ink:#0B1810; --ink-mid:#3A5442; --ink-light:#7A9A84;
+  --line:rgba(255,255,255,0.1); --line-dark:rgba(0,0,0,0.08);
+  --red:#C0392B; --red-soft:rgba(192,57,43,0.12);
+  --r:14px; --r-lg:22px; --r-xl:28px;
+  --shadow:0 4px 24px rgba(0,0,0,0.18); --shadow-lg:0 12px 48px rgba(0,0,0,0.28);
+  --font:'DM Sans',system-ui,sans-serif;
+  --font-d:'Cormorant Garamond',Georgia,serif;
+  --font-m:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{min-height:100%;}
+body{
+  background:radial-gradient(ellipse at 20% 10%,#1e5c35 0%,#0B2416 45%,#071810 100%);
+  background-attachment:fixed;
+  color:#fff;font-family:var(--font);-webkit-font-smoothing:antialiased;min-height:100vh;
+}
+/* subtle noise texture overlay */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;
+}
+button,input,select,textarea{font-family:var(--font);font-size:1rem;}
+.screen{display:none;min-height:100vh;position:relative;z-index:1;overflow-x:hidden;}
+.screen.active{display:block;}
+
+/* ═══ GLASS MIXIN ═══ */
+.glass{
+  background:var(--glass);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);
+}
+.glass-card{
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:var(--r-lg);
+  box-shadow:0 8px 32px rgba(0,0,0,0.24),inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* ═══ LOGIN SCREEN ═══ */
+.role-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.role-card{
+  width:100%;max-width:400px;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:var(--r-xl);
+  padding:40px 32px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.15);
+  text-align:center;
+}
+.brand-icon{margin-bottom:12px;}
+.brand-title{
+  font-family:var(--font-d);font-size:2.4rem;font-weight:600;
+  letter-spacing:.06em;color:#fff;
+  text-shadow:0 2px 20px rgba(201,151,58,0.3);
+}
+.gold-rule{
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-lt),transparent);
+  margin:10px auto 8px;width:120px;
+}
+.brand-sub{
+  font-family:var(--font-d);font-style:italic;
+  color:var(--gold-lt);font-size:1rem;
+  margin-bottom:28px;opacity:.9;
+}
+.role-label{
+  font-family:var(--font-m);font-size:.7rem;
+  text-transform:uppercase;letter-spacing:.12em;
+  color:rgba(255,255,255,.45);margin-bottom:14px;
+}
+.role-hint{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:16px;line-height:1.6;}
+
+/* Login form */
+.login-form{display:none;margin-top:16px;}
+.login-form.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.login-input{
+  width:100%;padding:12px 16px;margin-bottom:12px;
+  background:rgba(255,255,255,0.09);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:var(--r);
+  color:#fff;text-align:center;
+  font-family:var(--font-m);font-size:1.3rem;letter-spacing:.25em;
+}
+.login-input:focus{outline:none;border-color:var(--gold-lt);box-shadow:0 0 0 3px rgba(201,151,58,0.2);}
+.login-input::placeholder{color:rgba(255,255,255,.3);letter-spacing:.1em;font-size:1rem;}
+
+/* ═══ BUTTONS ═══ */
+.btn{
+  border:none;border-radius:var(--r);padding:13px 20px;
+  font-weight:500;cursor:pointer;letter-spacing:.02em;
+  transition:all .18s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:.93rem;
+}
+.btn:active{transform:scale(.97);}
+.btn-block{width:100%;margin-bottom:10px;}
+
+/* Glass button — primary */
+.btn-primary{
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.22);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-primary:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.3);}
+
+/* Gold button */
+.btn-gold{
+  background:linear-gradient(135deg,#C9973A,#E8C06A);
+  color:#0B2416;font-weight:700;
+  box-shadow:0 4px 20px rgba(201,151,58,0.4),inset 0 1px 0 rgba(255,255,255,0.25);
+  border:none;
+}
+.btn-gold:hover{filter:brightness(1.08);box-shadow:0 6px 24px rgba(201,151,58,0.5);}
+
+/* Green solid */
+.btn-green{
+  background:linear-gradient(135deg,#1C4A2E,#2A6040);
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+.btn-green:hover{background:linear-gradient(135deg,#2A6040,#3A7050);}
+
+.btn-outline{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,.8);
+  backdrop-filter:blur(8px);
+}
+.btn-outline:hover{background:rgba(255,255,255,0.11);}
+
+.btn-danger{background:rgba(192,57,43,0.15);color:#ff7b6b;border:1px solid rgba(192,57,43,0.3);}
+.btn-sm{padding:7px 14px;font-size:.82rem;}
+.btn-xs{padding:5px 10px;font-size:.76rem;}
+
+/* ═══ TOPBAR ═══ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(11,36,22,0.7);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(201,151,58,0.25);
+  position:sticky;top:0;z-index:30;
+}
+.brand-mini{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font-d);font-weight:600;font-size:1.05rem;
+  letter-spacing:.07em;color:#fff;
+}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.rtag{
+  font-family:var(--font-m);font-size:.62rem;letter-spacing:.09em;
+  padding:3px 10px;border-radius:999px;font-weight:500;
+}
+.rtag-staff{background:rgba(201,151,58,0.25);color:var(--gold-lt);border:1px solid rgba(201,151,58,0.35);}
+.rtag-owner{background:rgba(255,255,255,0.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,0.15);}
+.logout-btn{background:none;border:none;color:rgba(255,255,255,.45);font-size:.78rem;cursor:pointer;text-decoration:underline;padding:0;transition:color .15s;}
+.logout-btn:hover{color:rgba(255,255,255,.75);}
+
+/* ═══ NAV TABS ═══ */
+.tabs{
+  display:flex;gap:4px;padding:10px 16px 0;
+  background:rgba(11,36,22,0.5);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  background:none;border:none;
+  padding:9px 16px 11px;
+  font-weight:500;font-size:.85rem;
+  color:rgba(255,255,255,.45);
+  border-radius:0;cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid transparent;
+  transition:all .15s;margin-bottom:-1px;
+}
+.tab-btn:hover{color:rgba(255,255,255,.75);}
+.tab-btn.active{color:#fff;border-bottom-color:var(--gold-lt);font-weight:600;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ═══ STAFF PROGRESS ═══ */
+.progress-block{
+  text-align:center;padding:28px 16px 20px;
+  background:linear-gradient(180deg,rgba(28,74,46,0.4) 0%,transparent 100%);
+}
+.prog-nums{
+  font-family:var(--font-d);font-weight:600;font-size:3.4rem;line-height:1;
+  color:#fff;text-shadow:0 0 40px rgba(201,151,58,0.3);
+}
+.prog-den{font-size:1.9rem;opacity:.35;font-weight:400;}
+.prog-label{
+  font-size:.72rem;font-family:var(--font-m);
+  color:rgba(255,255,255,.4);margin:6px 0 16px;
+  text-transform:uppercase;letter-spacing:.1em;
+}
+.prog-bar{
+  max-width:280px;height:4px;
+  background:rgba(255,255,255,0.1);
+  border-radius:999px;overflow:hidden;margin:0 auto;
+}
+.prog-fill{height:100%;background:linear-gradient(90deg,#1C8A45,var(--gold-lt));transition:width .5s ease;}
+.info-strip{
+  display:flex;justify-content:center;gap:20px;
+  padding:10px 16px;
+  background:rgba(201,151,58,0.08);
+  border-top:1px solid rgba(201,151,58,0.15);
+  border-bottom:1px solid rgba(201,151,58,0.15);
+  font-size:.82rem;color:var(--gold-lt);
+}
+.info-strip strong{font-family:var(--font-m);}
+
+/* ═══ LOCATION ROW ═══ */
+.loc-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.loc-left{display:flex;align-items:center;gap:8px;font-size:.82rem;color:rgba(255,255,255,.55);}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-off{background:rgba(255,255,255,.25);}
+.dot-on{background:#4ADE80;box-shadow:0 0 8px rgba(74,222,128,0.7);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.5);}70%{box-shadow:0 0 0 8px rgba(74,222,128,0);}100%{box-shadow:0 0 0 0 rgba(74,222,128,0);}}
+
+/* ═══ STAFF FILTER TABS ═══ */
+.staff-filters{display:flex;gap:6px;padding:14px 16px 10px;}
+.sf-btn{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:999px;padding:7px 16px;
+  font-size:.82rem;font-weight:500;
+  color:rgba(255,255,255,.5);cursor:pointer;
+  transition:all .15s;
+}
+.sf-btn:hover{background:rgba(255,255,255,0.1);color:rgba(255,255,255,.8);}
+.sf-btn.active{
+  background:rgba(201,151,58,0.2);
+  border-color:rgba(201,151,58,0.4);
+  color:var(--gold-lt);
+}
+.sf-count{font-family:var(--font-m);font-size:.7rem;margin-left:4px;opacity:.65;}
+
+/* ═══ ROUTE LIST ═══ */
+.list-wrap{padding:10px 14px 90px;}
+.route-row{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--r);padding:12px 14px;
+  margin-bottom:8px;
+  transition:background .15s;
+}
+.route-row.done{
+  background:rgba(28,74,46,0.35);
+  border-color:rgba(74,222,128,0.15);
+}
+.seq{font-family:var(--font-m);font-size:.72rem;color:rgba(255,255,255,.3);width:22px;text-align:center;flex-shrink:0;}
+.route-info{flex:1;min-width:0;}
+.rname{font-weight:500;font-size:.93rem;color:#fff;}
+.raddr{font-size:.74rem;color:rgba(255,255,255,.45);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rqty-badge{
+  font-family:var(--font-m);font-size:.7rem;
+  color:var(--gold-lt);
+  background:rgba(201,151,58,0.12);
+  border:1px solid rgba(201,151,58,0.2);
+  padding:2px 8px;border-radius:6px;margin-top:4px;display:inline-block;
+}
+.route-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.rtime{font-family:var(--font-m);font-size:.68rem;color:rgba(255,255,255,.35);text-align:right;}
+.stamp-btn{
+  width:38px;height:38px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,#1C8A45,#2DA855);
+  color:#fff;cursor:pointer;font-size:1.1rem;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(28,138,69,0.4);
+  transition:all .15s;
+}
+.stamp-btn:hover{transform:scale(1.08);}
+.stamp-btn.undo{
+  background:linear-gradient(135deg,#9B2020,#C0392B);
+  box-shadow:0 4px 14px rgba(192,57,43,0.4);
+}
+.stamp-done{
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(74,222,128,0.15);
+  border:1px solid rgba(74,222,128,0.3);
+  color:#4ADE80;
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;
+}
+.pending-badge{
+  font-family:var(--font-m);font-size:.68rem;
+  color:var(--gold-lt);
+  background:rgba(201,151,58,0.1);
+  padding:3px 9px;border-radius:6px;
+  border:1px solid rgba(201,151,58,0.25);
+}
+.call-btn{
+  text-decoration:none;color:#4ADE80;
+  border:1px solid rgba(74,222,128,0.25);
+  padding:4px 9px;border-radius:6px;font-size:.73rem;font-weight:500;
+  display:inline-flex;align-items:center;gap:4px;margin-top:4px;
+  background:rgba(74,222,128,0.06);
+}
+
+/* ═══ QTY INPUT ═══ */
+.qty-row{display:flex;align-items:center;gap:6px;}
+.qty-input{
+  width:58px;padding:5px 8px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:8px;text-align:center;
+  color:#fff;font-family:var(--font-m);font-size:.86rem;
+}
+.qty-input:focus{outline:none;border-color:var(--gold-lt);}
+.qty-unit{font-size:.73rem;color:rgba(255,255,255,.35);}
+
+/* ═══ OWNER STATS ═══ */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:16px 16px 10px;}
+.stat-card{
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--r);padding:16px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.stat-num{
+  font-family:var(--font-d);font-weight:600;font-size:1.7rem;
+  color:#fff;letter-spacing:-.01em;
+}
+.stat-label{
+  font-size:.66rem;font-family:var(--font-m);
+  color:rgba(255,255,255,.35);
+  text-transform:uppercase;letter-spacing:.08em;margin-top:4px;
+}
+
+/* ═══ MAP ═══ */
+.map-card{margin:0 16px 16px;border-radius:var(--r);overflow:hidden;border:1px solid rgba(255,255,255,0.1);}
+.map-el{height:240px;}
+.map-cap{padding:8px 12px;background:rgba(11,36,22,0.8);font-size:.74rem;color:rgba(255,255,255,.4);font-family:var(--font-m);}
+
+/* ═══ CARDS / FORMS ═══ */
+.card{
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--r-lg);padding:18px;margin:12px 14px;
+  box-shadow:0 4px 24px rgba(0,0,0,0.15);
+  box-sizing:border-box;min-width:0;overflow:hidden;
+}
+.card h3{
+  font-family:var(--font-d);font-size:1.1rem;
+  font-weight:600;color:#fff;margin-bottom:14px;letter-spacing:.02em;
+}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
+.form-grid .span2{grid-column:1/-1;}
+.fi{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.fi label{font-size:.73rem;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.02em;}
+.fi input,.fi select{
+  padding:10px 13px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:10px;color:#fff;
+  transition:border-color .15s,box-shadow .15s;
+  width:100%;box-sizing:border-box;min-width:0;
+}
+.fi input::placeholder{color:rgba(255,255,255,.25);}
+.fi input:focus,.fi select:focus{
+  outline:none;
+  border-color:rgba(201,151,58,0.6);
+  box-shadow:0 0 0 3px rgba(201,151,58,0.12);
+}
+.fi select option{background:#1A3D2B;color:#fff;}
+textarea.fi-ta{
+  width:100%;padding:10px 13px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:10px;color:#fff;resize:vertical;
+}
+textarea.fi-ta::placeholder{color:rgba(255,255,255,.25);}
+textarea.fi-ta:focus{outline:none;border-color:rgba(201,151,58,0.6);}
+
+/* ═══ HOUSEHOLD LIST ═══ */
+.hh-row{
+  display:flex;align-items:flex-start;gap:10px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:var(--r);padding:12px 14px;
+  margin-bottom:8px;
+}
+.hh-info{flex:1;}
+.hh-name{font-weight:500;color:#fff;font-size:.93rem;}
+.hh-addr{font-size:.76rem;color:rgba(255,255,255,.45);margin-top:2px;}
+.hh-phone{font-size:.73rem;color:rgba(255,255,255,.35);margin-top:2px;}
+.hh-meta{display:flex;gap:6px;margin-top:6px;}
+.meta-tag{font-family:var(--font-m);font-size:.68rem;padding:3px 8px;border-radius:6px;}
+.meta-qty{background:rgba(255,255,255,0.08);color:rgba(255,255,255,.6);}
+.meta-rate{background:rgba(201,151,58,0.12);color:var(--gold-lt);}
+.hh-actions{display:flex;gap:5px;flex-shrink:0;}
+/* ── SKIP ── */
+.hh-row.hh-skipped{opacity:.55;}
+.hh-row.hh-skipped .hh-name{text-decoration:line-through;color:var(--ink-light);}
+.skip-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:.66rem;font-weight:700;letter-spacing:.03em;
+  padding:2px 7px;border-radius:20px;
+  background:rgba(255,90,90,.15);color:#ff9a9a;
+  border:1px solid rgba(255,90,90,.3);
+}
+.icon-btn-skip{color:rgba(255,255,255,.45);font-size:15px;}
+.icon-btn-skip.is-skipped{color:#ff9a9a;background:rgba(255,90,90,.15);}
+.dash-skipped-row{opacity:.38;}
+.dash-skipped-row .rname{text-decoration:line-through;}
+.icon-btn{
+  width:30px;height:30px;border-radius:8px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);
+  cursor:pointer;color:rgba(255,255,255,.7);
+  display:flex;align-items:center;justify-content:center;font-size:.88rem;
+  transition:background .15s;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.12);}
+.icon-btn-red{border-color:rgba(192,57,43,0.35);color:#ff7b6b;}
+.icon-btn-red:hover{background:rgba(192,57,43,0.15);}
+
+/* ═══ DAILY LOG ═══ */
+.date-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.date-nav-label{font-family:var(--font-d);font-weight:600;font-size:1.05rem;color:#fff;letter-spacing:.02em;}
+.log-table-wrap{overflow-x:auto;padding:12px 14px;}
+table{
+  width:100%;border-collapse:collapse;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:var(--r);overflow:hidden;
+}
+th{
+  font-family:var(--font-m);font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.08em;
+  color:rgba(255,255,255,.35);
+  padding:10px 13px;
+  background:rgba(255,255,255,0.04);
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+td{
+  padding:10px 13px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:.87rem;vertical-align:middle;color:rgba(255,255,255,.85);
+}
+tr:last-child td{border-bottom:none;}
+td.num{font-family:var(--font-m);text-align:right;}
+td.center{text-align:center;}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;}
+.s-done{background:#4ADE80;}
+.s-skip{background:rgba(255,255,255,.25);}
+.log-qty-input{
+  width:52px;padding:4px 7px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:7px;text-align:center;
+  color:#fff;font-family:var(--font-m);font-size:.8rem;
+}
+.log-qty-input:focus{outline:none;border-color:var(--gold-lt);}
+
+/* ═══ REPORTS ═══ */
+.filter-row{
+  display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;
+  background:rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.filter-row select{
+  padding:9px 13px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:10px;color:#fff;font-size:.87rem;
+}
+.filter-row select option{background:#133320;}
+.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;padding:14px;}
+.rscard{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:var(--r);padding:14px;text-align:center;
+}
+.rsnum{font-family:var(--font-d);font-weight:600;font-size:1.5rem;color:#fff;letter-spacing:-.01em;}
+.rslabel{font-size:.65rem;font-family:var(--font-m);color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+
+/* ═══ MODAL ═══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+@media(min-width:600px){.modal-overlay.open{align-items:center;}}
+.modal{
+  background:rgba(20,58,38,0.92);
+  backdrop-filter:blur(32px);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+  width:100%;max-width:500px;
+  padding:26px 22px 34px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 -20px 60px rgba(0,0,0,0.4);
+}
+@media(min-width:600px){.modal{border-radius:var(--r-lg);}}
+.modal-title{font-family:var(--font-d);font-size:1.3rem;font-weight:600;color:#fff;margin-bottom:18px;letter-spacing:.02em;}
+.modal-footer{display:flex;gap:8px;margin-top:20px;}
+
+/* ═══ TOAST ═══ */
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translate(-50%,12px);
+  background:rgba(20,58,38,0.9);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.15);
+  color:#fff;padding:10px 20px;border-radius:999px;
+  font-size:.82rem;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;z-index:200;
+  max-width:88vw;text-align:center;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.toast.err{background:rgba(150,30,30,0.9);border-color:rgba(255,100,100,0.25);}
+
+.empty{text-align:center;padding:36px 16px;color:rgba(255,255,255,.3);font-size:.87rem;line-height:1.6;}
+
+/* ═══ SLOT BADGES & HEADERS ═══ */
+.slot-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.68rem;font-weight:600;letter-spacing:.04em;
+  padding:2px 8px;border-radius:20px;
+}
+.slot-badge.morning{ background:rgba(255,180,50,0.18); color:#E8C06A; border:1px solid rgba(232,192,106,0.3); }
+.slot-badge.evening{ background:rgba(100,120,255,0.18); color:#A0B0FF; border:1px solid rgba(160,176,255,0.3); }
+.slot-badge.both   { background:rgba(100,200,130,0.14); color:#7ECFA0; border:1px solid rgba(126,207,160,0.3); }
+.slot-section-hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0 6px;margin-top:4px;
+  font-family:var(--font-m);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--gold-lt);border-bottom:1px solid rgba(201,151,58,0.2);margin-bottom:2px;
+}
+.slot-now-pill{
+  display:inline-block;font-size:.65rem;padding:2px 7px;border-radius:10px;
+  background:rgba(201,151,58,0.25);color:var(--gold-lt);font-weight:700;letter-spacing:.03em;
+  animation: pulse-gold 2s infinite;
+}
+/* ── ORDER CARDS ── */
+.order-card{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.order-card-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.order-id{font-size:.68rem;font-weight:700;color:var(--gold-lt);letter-spacing:.06em;}
+.order-customer{font-size:.97rem;font-weight:700;color:#fff;}
+.order-phone{font-size:.78rem;color:var(--ink-light);}
+.order-address{font-size:.78rem;color:rgba(255,255,255,.55);line-height:1.5;margin-top:2px;}
+.order-items-list{
+  background:rgba(0,0,0,.2);border-radius:8px;
+  padding:8px 10px;display:flex;flex-direction:column;gap:4px;
+}
+.order-item-row{display:flex;justify-content:space-between;font-size:.78rem;color:rgba(255,255,255,.75);}
+.order-total{font-size:.85rem;font-weight:700;color:var(--gold-lt);border-top:1px solid rgba(255,255,255,.08);padding-top:6px;display:flex;justify-content:space-between;}
+.order-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.order-slot-badge{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:600;background:rgba(255,180,50,.15);color:#E8C06A;border:1px solid rgba(232,192,106,.25);}
+.order-pay-badge{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:600;background:rgba(100,200,130,.12);color:#7ECFA0;border:1px solid rgba(126,207,160,.25);}
+.order-time{font-size:.68rem;color:var(--ink-light);margin-left:auto;}
+.status-select{
+  width:100%;padding:9px 12px;border-radius:9px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:#fff;font-family:var(--font-m);font-size:.8rem;cursor:pointer;outline:none;
+}
+.status-select:focus{border-color:var(--gold-lt);}
+.order-filter-btn{font-size:.72rem !important;padding:5px 11px !important;}
+.order-filter-btn.active{background:var(--gold) !important;border-color:var(--gold) !important;}
+@keyframes pulse-gold{ 0%,100%{opacity:1} 50%{opacity:.6} }
+
+/* ═══ LOADER ═══ */
+.loading-overlay{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at center,#1C4A2E 0%,#0B2416 100%);
+  z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .4s;
+}
+.spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.1);
+  border-top:2px solid var(--gold-lt);
+  animation:spin 1s linear infinite;margin-bottom:16px;
+}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+</style>
+</head>
+<body>
+
+<div id="globalLoader" class="loading-overlay">
+  <div class="spinner"></div>
+  <p style="font-family:var(--font-m); font-size:0.8rem; color:rgba(255,255,255,0.7);">Connecting securely...</p>
+</div>
+
+<!-- ROLE / LOGIN -->
+<div id="screen-login" class="screen">
+  <div class="role-wrap">
+    <div class="role-card">
+      <div class="brand-icon">
+        <img src="logo.png" alt="Aheera Milk" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(201,151,58,0.4));" onerror="this.style.display='none';document.getElementById('fallbackLogo').style.display='block'">
+        <svg id="fallbackLogo" style="display:none" width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <path d="M36 6 C16 8 7 22 7 37 C7 53 20 66 36 66 C52 66 65 53 65 37 C65 22 56 8 36 6Z" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+          <ellipse cx="34" cy="42" rx="14" ry="9" fill="rgba(255,255,255,0.85)"/>
+          <ellipse cx="47" cy="35" rx="6" ry="5" fill="rgba(255,255,255,0.85)"/>
+          <rect x="23" y="49" width="3" height="8" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <rect x="29" y="50" width="3" height="7" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <rect x="37" y="50" width="3" height="7" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <rect x="43" y="49" width="3" height="8" rx="1.5" fill="rgba(255,255,255,0.85)"/>
+          <path d="M20 40 Q13 35 16 28" stroke="rgba(255,255,255,0.85)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 class="brand-title">AHEERA MILK</h1>
+      <div class="gold-rule"></div>
+      <p class="brand-sub">The Vaidik Way of Purity</p>
+      
+      <div id="roleSelection">
+        <p class="role-label">Select your portal</p>
+        <button class="btn btn-gold btn-block" onclick="showLogin('staff')" style="font-size:.95rem;padding:14px 20px;letter-spacing:.03em;">🚴&nbsp; Delivery Partner</button>
+        <button class="btn btn-primary btn-block" onclick="showLogin('owner')" style="font-size:.95rem;padding:14px 20px;letter-spacing:.03em;">📋&nbsp; Admin / Owner</button>
+      </div>
+
+      <div id="loginForm" class="login-form">
+        <p class="role-label" id="loginTitle">Enter PIN</p>
+        <input type="password" id="pinInput" class="login-input" placeholder="****">
+        <button class="btn btn-green btn-block" id="verifyBtn">Secure Login</button>
+        <button class="btn btn-outline btn-block btn-sm" onclick="hideLogin()">Back</button>
+      </div>
+
+      <p class="role-hint">Data is synced securely via Cloud Firestore.</p>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF -->
+<div id="screen-staff" class="screen">
+  <header class="topbar">
+    <div class="brand-mini">
+      <img src="logo.png" alt="" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(201,151,58,0.5));" onerror="this.outerHTML='🐄'">
+      AHEERA MILK
+    </div>
+    <div class="topbar-right">
+      <span class="rtag rtag-staff">STAFF</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+  <section class="progress-block">
+    <div class="prog-nums"><span id="sDone">0</span><span class="prog-den">/<span id="sTotal">0</span></span></div>
+    <div class="prog-label">delivered today &middot; <span id="sDateLbl"></span></div>
+    <div class="prog-bar"><div id="sProgFill" class="prog-fill" style="width:0%"></div></div>
+  </section>
+  <div class="info-strip">Total today: <strong id="sTotalLitres">0 L</strong></div>
+  <div class="loc-row">
+    <div class="loc-left"><span id="locDot" class="dot dot-off"></span><span id="locTxt">Location sharing off</span></div>
+    <button id="locBtn" class="btn btn-outline btn-sm">Share location</button>
+  </div>
+  <div class="staff-filters">
+    <button class="sf-btn active" data-sf="pending">Pending <span class="sf-count" id="sfPendCount"></span></button>
+    <button class="sf-btn" data-sf="delivered">Delivered <span class="sf-count" id="sfDoneCount"></span></button>
+    <button class="sf-btn" data-sf="all">All</button>
+  </div>
+  <div class="list-wrap" id="staffList"></div>
+</div>
+
+<!-- OWNER -->
+<div id="screen-owner" class="screen">
+  <header class="topbar">
+    <div class="brand-mini">
+      <img src="logo.png" alt="" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(201,151,58,0.5));" onerror="this.outerHTML='🐄'">
+      AHEERA MILK
+    </div>
+    <div class="topbar-right">
+      <span class="rtag rtag-owner">ADMIN</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="households">Households</button>
+    <button class="tab-btn" data-tab="daily">Daily Log</button>
+    <button class="tab-btn" data-tab="reports">Reports &amp; Bills</button>
+    <button class="tab-btn" data-tab="orders">Orders <span id="newOrdersBadge" style="display:none;background:#ff4b4b;color:#fff;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:3px;vertical-align:middle;"></span></button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-pane active">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="oDelivered">0/0</div><div class="stat-label">Delivered</div></div>
+      <div class="stat-card"><div class="stat-num" id="oLitres">0 L</div><div class="stat-label">Litres today</div></div>
+      <div class="stat-card"><div class="stat-num" id="oPercent">0%</div><div class="stat-label">Completion</div></div>
+      <div class="stat-card"><div class="stat-num" id="oLastTime">—</div><div class="stat-label">Last delivery</div></div>
+      <div class="stat-card"><div class="stat-num" id="oStaffStatus">Idle</div><div class="stat-label" id="oLocAge">No GPS yet</div></div>
+    </div>
+    <div class="map-card">
+      <div id="map" class="map-el"></div>
+      <div id="mapCap" class="map-cap">Waiting for staff to share location…</div>
+    </div>
+    <div style="padding:0 14px 14px;">
+      <div style="font-family:var(--font-m);font-size:.72rem;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Today's status</div>
+      <div id="oDashList" class="route-list"></div>
+    </div>
+  </div>
+
+  <!-- HOUSEHOLDS -->
+  <div id="tab-households" class="tab-pane" style="padding-bottom:20px;">
+    <div class="card">
+      <h3>Add household</h3>
+      <div class="form-grid">
+        <div class="fi span2"><label>Household / Customer name *</label><input id="hhName" placeholder="e.g. Sharma Niwas"></div>
+        <div class="fi span2"><label>Address / Landmark</label><input id="hhAddr" placeholder="e.g. Near Civil Hospital, Lane 4"></div>
+        <div class="fi span2"><label>Phone Number</label><input id="hhPhone" type="tel" placeholder="e.g. 9876543210"></div>
+        <div class="fi"><label>Daily qty (litres)</label><input id="hhQty" type="number" min="0.5" step="0.5" placeholder="e.g. 2"></div>
+        <div class="fi"><label>Rate (₹ per litre)</label><input id="hhRate" type="number" min="1" step="1" placeholder="e.g. 60"></div>
+        <div class="fi span2">
+          <label>Delivery Slot</label>
+          <select id="hhSlot">
+            <option value="morning">🌅 Morning</option>
+            <option value="evening">🌆 Evening</option>
+            <option value="both">🌅🌆 Both (Morning & Evening)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="addHhBtn" class="btn btn-primary">Add to route</button>
+        <button id="bulkBtn" class="btn btn-outline btn-sm">Bulk add ▾</button>
+      </div>
+    </div>
+    <div id="bulkCard" class="card" style="display:none;">
+      <h3>Bulk add households</h3>
+      <p style="font-size:.8rem;color:var(--ink-mid);margin-bottom:8px;">One per line: <code>Name, Address, Phone, Qty, Rate</code></p>
+      <textarea id="bulkTa" class="fi-ta" rows="7" placeholder="Sharma Niwas, Near temple, 9876543210, 2, 60
+Verma House, Lane 3, , 1.5, 65"></textarea>
+      <button id="bulkAddBtn" class="btn btn-green" style="margin-top:8px;">Add all</button>
+    </div>
+    <div class="card">
+      <h3>Route (<span id="hhCount">0</span> households)</h3>
+      <p style="font-size:.78rem;color:var(--ink-mid);margin-bottom:10px;">Tap ✏️ to edit · arrows to reorder</p>
+      <div id="hhList"></div>
+    </div>
+  </div>
+
+  <!-- DAILY LOG -->
+  <div id="tab-daily" class="tab-pane">
+    <div class="date-nav">
+      <button id="logPrev" class="btn btn-outline btn-sm">‹ Prev</button>
+      <span class="date-nav-label" id="logDateLabel"></span>
+      <button id="logNext" class="btn btn-outline btn-sm">Next ›</button>
+    </div>
+    <div class="log-table-wrap">
+      <table id="logTable">
+        <thead><tr><th>#</th><th>Household</th><th>Status</th><th style="text-align:right">Qty (L)</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+        <tbody id="logBody"></tbody>
+        <tfoot id="logFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="tab-reports" class="tab-pane">
+    <div class="filter-row">
+      <select id="rptHouse"><option value="">— Select household —</option></select>
+      <select id="rptMonth"></select>
+    </div>
+    <div class="report-summary" id="rptSummary"></div>
+    <div style="padding:0 14px 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button id="genPdfBtn" class="btn btn-primary">📄 Generate PDF Bill</button>
+      <span style="font-size:.76rem;color:var(--ink-light)">Select a household above to generate their monthly bill</span>
+    </div>
+    <div class="log-table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Household</th><th style="text-align:right">Qty (L)</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody id="rptBody"></tbody>
+        <tfoot id="rptFoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ORDERS TAB -->
+  <div id="tab-orders" class="tab-pane" style="padding-bottom:24px;">
+    <div style="padding:14px 14px 0;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-xs order-filter-btn active" data-of="all">All</button>
+        <button class="btn btn-xs order-filter-btn" data-of="new">🆕 New</button>
+        <button class="btn btn-xs order-filter-btn" data-of="confirmed">✅ Confirmed</button>
+        <button class="btn btn-xs order-filter-btn" data-of="dispatched">🚴 Dispatched</button>
+        <button class="btn btn-xs order-filter-btn" data-of="delivered">📦 Delivered</button>
+        <button class="btn btn-xs order-filter-btn" data-of="cancelled">❌ Cancelled</button>
+      </div>
+    </div>
+    <div id="ordersList" style="padding:0 14px;display:flex;flex-direction:column;gap:12px;">
+      <div class="empty">Loading orders…</div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal">
+    <h3 class="modal-title">Edit Household</h3>
+    <div class="form-grid">
+      <div class="fi span2"><label>Name *</label><input id="editName" placeholder="Household name"></div>
+      <div class="fi span2"><label>Address</label><input id="editAddr" placeholder="Address / landmark"></div>
+      <div class="fi span2"><label>Phone Number</label><input id="editPhone" type="tel" placeholder="e.g. 9876543210"></div>
+      <div class="fi"><label>Daily qty (L)</label><input id="editQty" type="number" min="0.5" step="0.5"></div>
+      <div class="fi"><label>Rate (₹/L)</label><input id="editRate" type="number" min="1" step="1"></div>
+      <div class="fi span2">
+        <label>Delivery Slot</label>
+        <select id="editSlot">
+          <option value="morning">🌅 Morning</option>
+          <option value="evening">🌆 Evening</option>
+          <option value="both">🌅🌆 Both (Morning & Evening)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="editSaveBtn" class="btn btn-primary">Save changes</button>
+      <button id="editCancelBtn" class="btn btn-outline">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Firebase SDK Integration -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Utility setup
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const pad = n => String(n).padStart(2,'0');
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const fmtDate = iso => new Date(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const fmtTime = iso => iso ? new Date(iso).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) : '—';
+const fmtAgo = iso => { if(!iso)return''; const m=Math.floor((Date.now()-new Date(iso))/60000); return m<1?'just now':m<60?m+'m ago':Math.floor(m/60)+'h ago'; };
+const monthStr = (y,m) => new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+const daysInMonth = (y,m) => new Date(y,m,0).getDate();
+
+function toast(msg,err){
+  const t=$('#toast'); t.textContent=msg; t.className='toast show'+(err?' err':'');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='toast',2400);
+}
+
+// ---- FIREBASE SETUP WITH YOUR WORKING KEYS ----
+const firebaseConfig = {
+  apiKey: "AIzaSyCU64GC8v-KG5_pe8EGI59a1iTy12ghX3M",
+  authDomain: "aheera-milk.firebaseapp.com",
+  projectId: "aheera-milk",
+  storageBucket: "aheera-milk.firebasestorage.app",
+  messagingSenderId: "367296493003",
+  appId: "1:367296493003:web:090a52fc5db184cf42f24e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Data Paths
+const basePath  = ['artifacts', 'aheera-milk', 'public', 'data'];
+const delRef    = collection(db, ...basePath, 'deliveries');
+const skipRef   = collection(db, ...basePath, 'skips');
+const ordersRef = collection(db, 'artifacts', 'aheera-milk', 'public', 'data', 'orders');
+const locRef    = doc(db, ...basePath, 'state', 'staff-location');
+
+// Global State
+let households = [];
+let deliveries = {};
+let skips      = {};
+let allOrders  = [];
+let orderFilter = 'all';
+let staffLoc = null;
+let currentRole = null;
+let watchId = null, lastLocSent = 0;
+let sfFilter = 'pending', logDate = todayStr();
+let editingId = null;
+let map = null, mapMarker = null;
+
+let unsubHouseholds = null;
+let unsubDeliveries = null;
+let unsubLocation   = null;
+let unsubOrders     = null;
+
+// ---- AUTHENTICATION ----
+async function initSystem() {
+  // Failsafe: hide loader after 5s no matter what
+  setTimeout(() => {
+    $('#globalLoader').style.opacity = '0';
+    setTimeout(() => $('#globalLoader').style.display = 'none', 300);
+  }, 5000);
+
+  try {
+    await signInAnonymously(auth);
+    $('#globalLoader').style.opacity = '0';
+    setTimeout(() => $('#globalLoader').style.display = 'none', 300);
+    checkSavedLogin();
+  } catch(e) {
+    console.error("Auth error:", e);
+    toast("Database connection failed. Please refresh.", true);
+  }
+}
+
+// ---- LOGIN & ROLE LOGIC ----
+let pendingRole = '';
+window.showLogin = function(role) {
+  pendingRole = role;
+  $('#roleSelection').style.display = 'none';
+  $('#loginForm').classList.add('active');
+  $('#loginTitle').textContent = role === 'owner' ? 'Admin Login' : 'Staff Login';
+  $('#pinInput').value = '';
+  $('#pinInput').focus();
+}
+window.hideLogin = function() {
+  $('#loginForm').classList.remove('active');
+  setTimeout(() => $('#roleSelection').style.display = 'block', 300);
+}
+
+$('#verifyBtn').addEventListener('click', verifyLogin);
+$('#pinInput').addEventListener('keypress', e => { if(e.key === 'Enter') verifyLogin(); });
+
+function verifyLogin() {
+  const pin = $('#pinInput').value;
+  if (pendingRole === 'owner' && pin === 'admin') {
+    loginAs('owner');
+  } else if (pendingRole === 'staff' && pin === '1234') {
+    loginAs('staff');
+  } else {
+    toast('Incorrect PIN', true);
+  }
+}
+
+function loginAs(role) {
+  currentRole = role;
+  localStorage.setItem('aheera_role', role);
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-' + role).classList.add('active');
+  startCloudSync(role);
+}
+
+function checkSavedLogin() {
+  const saved = localStorage.getItem('aheera_role');
+  if (saved === 'owner' || saved === 'staff') {
+    loginAs(saved);
+  } else {
+    $('#screen-login').classList.add('active');
+  }
+}
+
+window.logout = function() {
+  localStorage.removeItem('aheera_role');
+  currentRole = null;
+  stopAll();
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#screen-login').classList.add('active');
+  hideLogin();
+}
+
+function stopAll() {
+  if(watchId !== null) { try{navigator.geolocation.clearWatch(watchId);}catch(e){} watchId = null; }
+  if(unsubHouseholds) { unsubHouseholds(); unsubHouseholds = null; }
+  if(unsubDeliveries) { unsubDeliveries(); unsubDeliveries = null; }
+  if(unsubLocation) { unsubLocation(); unsubLocation = null; }
+}
+
+// ---- CLOUD SYNC & LISTENERS ----
+function startCloudSync(role) {
+  unsubHouseholds = onSnapshot(doc(db, ...basePath, 'lists', 'households'), docSnap => {
+    if (docSnap.exists()) {
+      households = docSnap.data().list || [];
+    } else {
+      households = [];
+    }
+    if (role === 'staff') renderStaff();
+    if (role === 'owner') {
+      renderHHList();
+      populateRptSelects();
+      refreshDash();
+      if(logDate === todayStr()) renderLog();
+    }
+  });
+
+  unsubDeliveries = onSnapshot(doc(delRef, todayStr()), docSnap => {
+    deliveries = docSnap.exists() ? docSnap.data() : {};
+    if (role === 'staff') renderStaff();
+    if (role === 'owner') {
+      refreshDash();
+      if(logDate === todayStr()) renderLog();
+    }
+  });
+
+  if (role === 'owner') {
+    unsubLocation = onSnapshot(locRef, docSnap => {
+      staffLoc = docSnap.exists() ? docSnap.data() : null;
+      refreshDash();
+      updateMap();
+    });
+    ensureMap();
+    renderReport();
+
+    // Load today's skips
+    loadSkipsFromCloud(todayStr()).then(s => {
+      skips = s;
+      renderHHList(); refreshDash(); if(logDate === todayStr()) renderLog();
+    });
+
+    // Orders realtime listener
+    if (unsubOrders) unsubOrders();
+    unsubOrders = onSnapshot(
+      ordersRef,
+      snap => {
+        allOrders = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return tb - ta;
+          });
+        renderOrders();
+        const newCount = allOrders.filter(o => o.status === 'new').length;
+        const badge = document.getElementById('newOrdersBadge');
+        if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline' : 'none'; }
+      },
+      err => console.error('Orders listener:', err)
+    );
+  } else if (role === 'staff') {
+    // Load skips for staff too so route is filtered
+    loadSkipsFromCloud(todayStr()).then(s => { skips = s; renderStaff(); });
+    $('#sDateLbl').textContent = new Date().toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'});
+  }
+}
+
+async function saveHouseholdsToCloud() {
+  try {
+    await setDoc(doc(db, ...basePath, 'lists', 'households'), { list: households });
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+async function saveDeliveriesToCloud(dateStr, dataMap) {
+  try {
+    await setDoc(doc(delRef, dateStr), dataMap);
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+async function saveSkipsToCloud(dateStr, map) {
+  try { await setDoc(doc(skipRef, dateStr), map); } catch(e) { console.error('skip save', e); }
+}
+async function loadSkipsFromCloud(dateStr) {
+  try { const s = await getDoc(doc(skipRef, dateStr)); return s.exists() ? s.data() : {}; }
+  catch(e) { return {}; }
+}
+
+// ======================== STAFF LOGIC ========================
+let armedUndo=new Set(), armedTimers={};
+
+window.renderStaff = function() {
+  const slot = currentSlot();
+  const slotHouseholds = households.filter(h => householdInSlot(h, slot) && !skips[h.id]);
+  const total = slotHouseholds.length;
+  let done = 0, litres = 0;
+  slotHouseholds.forEach(h => {
+    const e = deliveries[h.id] || {};
+    if (e.status === 'delivered') { done++; litres += parseFloat(e.qty || h.defaultQty || 1); }
+  });
+  
+  $('#sDone').textContent = done; $('#sTotal').textContent = total;
+  $('#sProgFill').style.width = (total ? Math.round(done/total*100) : 0) + '%';
+  $('#sTotalLitres').textContent = litres.toFixed(1) + ' L';
+  const pending = total - done;
+  $('#sfPendCount').textContent = pending || '';
+  $('#sfDoneCount').textContent = done || '';
+
+  const visible = slotHouseholds.map((h,i)=>({h,i})).filter(({h}) => {
+    const s = (deliveries[h.id] || {}).status || 'pending';
+    if(sfFilter === 'pending') return s !== 'delivered';
+    if(sfFilter === 'delivered') return s === 'delivered';
+    return true;
+  });
+
+  const list = $('#staffList');
+  if(!households.length) {
+    list.innerHTML = '<div class="empty">No route set up yet.<br>Ask the owner to add households.</div>';
+    return;
+  }
+  if(!slotHouseholds.length) {
+    list.innerHTML = `<div class="empty">No ${slot} deliveries scheduled.</div>`;
+    return;
+  }
+  if(!visible.length) {
+    list.innerHTML = '<div class="empty">'+(sfFilter==='pending'?'🎉 All done! Nothing pending.':'Nothing delivered yet.')+'</div>';
+    return;
+  }
+
+  // Section header
+  const nextSlot = slot === 'morning' ? 'Evening (after 2 PM)' : 'Morning (before 2 PM)';
+  list.innerHTML = `<div class="slot-section-hdr">
+    ${slot === 'morning' ? '🌅' : '🌆'} ${slot.charAt(0).toUpperCase()+slot.slice(1)} Route
+    <span class="slot-now-pill">ACTIVE NOW</span>
+    <span style="margin-left:auto;font-size:.65rem;color:var(--ink-light);font-weight:400;">${nextSlot} next</span>
+  </div>`;
+  
+  visible.forEach(({h,i}) => {
+    const e = deliveries[h.id] || {status:'pending', qty:h.defaultQty||1};
+    const isDone = e.status === 'delivered';
+    const isArmed = armedUndo.has(h.id);
+    const row = document.createElement('div');
+    row.className = 'route-row' + (isDone ? ' done' : '');
+    const qty = e.qty || h.defaultQty || 1;
+    
+    let rightHtml;
+    if(isDone) {
+      rightHtml = `
+        <div class="rtime">${fmtTime(e.time)}<br>${parseFloat(qty).toFixed(1)} L</div>
+        <button class="stamp-btn${isArmed?' undo':''}" data-undo="${h.id}">${isArmed?'↺':'✓'}</button>`;
+    } else {
+      rightHtml = `
+        <div class="qty-row">
+          <input class="qty-input" type="number" min="0.5" step="0.5" value="${parseFloat(h.defaultQty||1).toFixed(1)}" data-qid="${h.id}">
+          <span class="qty-unit">L</span>
+        </div>
+        <button class="btn btn-green btn-sm" data-mark="${h.id}">✓ Done</button>`;
+    }
+    
+    const callBtn = h.phone ? `<a href="tel:${h.phone}" class="call-btn">📞 Call</a>` : '';
+
+    row.innerHTML = `
+      <div class="seq">${i+1}</div>
+      <div class="route-info">
+        <div class="rname">${esc(h.name)}</div>
+        ${h.address ? `<div class="raddr">${esc(h.address)}</div>` : ''}
+        ${callBtn}
+        <div><span class="rqty-badge">${parseFloat(h.defaultQty||1).toFixed(1)} L/day · ₹${h.ratePerUnit||60}/L</span></div>
+      </div>
+      <div class="route-right">${rightHtml}</div>`;
+    list.appendChild(row);
+  });
+
+  $$('[data-mark]', list).forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.mark;
+    const qEl = list.querySelector(`[data-qid="${id}"]`);
+    const qty = qEl ? parseFloat(qEl.value) || households.find(h=>h.id===id)?.defaultQty || 1 : 1;
+    markDel(id, qty);
+  }));
+  $$('[data-undo]', list).forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.undo;
+    if(armedUndo.has(id)){
+      clearTimeout(armedTimers[id]); armedUndo.delete(id); undoDel(id);
+    } else {
+      armedUndo.add(id); renderStaff();
+      armedTimers[id] = setTimeout(() => { armedUndo.delete(id); renderStaff(); }, 3000);
+    }
+  }));
+}
+
+async function markDel(id, qty) {
+  let lat = null, lng = null;
+  try { if(navigator.geolocation) {
+    const p = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej,{timeout:4000,maximumAge:30000}));
+    lat = p.coords.latitude; lng = p.coords.longitude;
+  }} catch(e){}
+  
+  deliveries[id] = { status: 'delivered', qty: qty, time: new Date().toISOString(), lat, lng };
+  renderStaff(); 
+  await saveDeliveriesToCloud(todayStr(), deliveries);
+}
+
+async function undoDel(id) {
+  const h = households.find(x => x.id === id);
+  deliveries[id] = { status: 'pending', qty: h?.defaultQty || 1 };
+  renderStaff();
+  await saveDeliveriesToCloud(todayStr(), deliveries);
+  toast('Marked pending');
+}
+
+$('#locBtn').addEventListener('click', () => {
+  if (watchId !== null) {
+    try { navigator.geolocation.clearWatch(watchId); } catch(e){} 
+    watchId = null;
+    setLocUI(false);
+    setDoc(locRef, { lat: null, lng: null, sharing: false, time: new Date().toISOString() });
+    return;
+  }
+  if (!navigator.geolocation) { toast('Location not available', true); return; }
+  
+  setLocUI(true, true);
+  watchId = navigator.geolocation.watchPosition(pos => {
+    setLocUI(true);
+    const now = Date.now();
+    if (now - lastLocSent > 15000) {
+      lastLocSent = now;
+      setDoc(locRef, { lat: pos.coords.latitude, lng: pos.coords.longitude, sharing: true, time: new Date().toISOString() });
+    }
+  }, err => {
+    toast('Location error', true); setLocUI(false); watchId = null;
+  }, {enableHighAccuracy: true, maximumAge: 10000, timeout: 15000});
+});
+
+function setLocUI(on, starting) {
+  $('#locDot').className = 'dot ' + (on ? 'dot-on' : 'dot-off');
+  $('#locTxt').textContent = on ? (starting ? 'Starting…' : 'Sharing your location') : 'Location sharing off';
+  $('#locBtn').textContent = on ? 'Stop sharing' : 'Share location';
+}
+
+$$('[data-sf]').forEach(b => b.addEventListener('click', () => {
+  sfFilter = b.dataset.sf;
+  $$('[data-sf]').forEach(x => x.classList.toggle('active', x === b));
+  renderStaff();
+}));
+
+// ======================== SLOT HELPER ========================
+const EVENING_HOUR = 14; // 2:00 PM switch
+
+function currentSlot() {
+  return new Date().getHours() >= EVENING_HOUR ? 'evening' : 'morning';
+}
+
+function slotLabel(slot) {
+  return slot === 'morning' ? '🌅 Morning' : slot === 'evening' ? '🌆 Evening' : '🌅🌆 Both';
+}
+
+function householdInSlot(h, slot) {
+  const s = h.slot || 'morning';
+  return s === 'both' || s === slot;
+}
+
+// ======================== OWNER LOGIC ========================
+
+$$('.tab-btn').forEach(b => b.addEventListener('click', () => {
+  const tab = b.dataset.tab;
+  $$('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+  $$('.tab-pane').forEach(x => x.classList.remove('active'));
+  $('#tab-' + tab).classList.add('active');
+  if (tab === 'dashboard') ensureMap();
+  if (tab === 'daily') renderLog();
+  if (tab === 'reports') renderReport();
+  if (tab === 'orders') renderOrders();
+}));
+
+// ── ORDER FILTER BUTTONS ──
+$$('.order-filter-btn').forEach(b => b.addEventListener('click', () => {
+  $$('.order-filter-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  orderFilter = b.dataset.of;
+  renderOrders();
+}));
+
+// ── RENDER ORDERS ──
+function fmtOrderTime(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ' ' +
+         d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+const STATUS_LABELS = {
+  new:       '🆕 New',
+  confirmed: '✅ Confirmed',
+  dispatched:'🚴 Dispatched',
+  delivered: '📦 Delivered',
+  cancelled: '❌ Cancelled',
+};
+
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+  if (!list) return;
+
+  const filtered = orderFilter === 'all'
+    ? allOrders
+    : allOrders.filter(o => o.status === orderFilter);
+
+  if (!allOrders.length) {
+    list.innerHTML = '<div class="empty">No orders yet.<br>Share your store link to start receiving orders.</div>';
+    return;
+  }
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty">No ${orderFilter} orders.</div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(order => {
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    const itemsHtml = (order.items || []).map(i =>
+      `<div class="order-item-row">
+        <span>${i.productName} × ${i.qty} (${i.variant})</span>
+        <span>₹${i.subtotal || i.price * i.qty}</span>
+      </div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="order-card-hdr">
+        <div>
+          <div class="order-id">AM-${order.id.slice(-8).toUpperCase()}</div>
+          <div class="order-customer">${order.customerName || '—'}</div>
+          <div class="order-phone">📞 ${order.phone || '—'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="order-time">${fmtOrderTime(order.createdAt)}</div>
+        </div>
+      </div>
+      <div class="order-address">📍 ${[order.address, order.city, order.pincode].filter(Boolean).join(', ')}</div>
+      <div class="order-meta">
+        <span class="order-slot-badge">${order.deliverySlot === 'evening' ? '🌆 Evening' : '🌅 Morning'}</span>
+        <span class="order-pay-badge">${order.paymentMethod || 'COD'}</span>
+        ${order.note ? `<span style="font-size:.7rem;color:var(--ink-light)">💬 ${order.note}</span>` : ''}
+      </div>
+      <div class="order-items-list">
+        ${itemsHtml}
+        <div class="order-total"><span>Total</span><span>₹${order.total || 0}</span></div>
+      </div>
+      <select class="status-select" data-oid="${order.id}">
+        ${Object.entries(STATUS_LABELS).map(([v,l]) =>
+          `<option value="${v}" ${order.status === v ? 'selected' : ''}>${l}</option>`
+        ).join('')}
+      </select>
+      <div style="display:flex;gap:8px;">
+        <a href="tel:${order.phone}" style="flex:1;text-align:center;padding:9px;background:rgba(255,255,255,.08);border-radius:9px;color:#fff;text-decoration:none;font-size:.8rem;font-weight:600;">📞 Call</a>
+        <a href="https://wa.me/91${order.phone}?text=${encodeURIComponent(`Hi ${order.customerName}, your Aheera Milk order AM-${order.id.slice(-8).toUpperCase()} is ${STATUS_LABELS[order.status]}. Total: ₹${order.total}. For queries call +91 79923 60814.`)}" target="_blank"
+           style="flex:1;text-align:center;padding:9px;background:#25D366;border-radius:9px;color:#fff;text-decoration:none;font-size:.8rem;font-weight:600;">💬 WhatsApp</a>
+      </div>`;
+
+    // Status change
+    card.querySelector('.status-select').addEventListener('change', async e => {
+      const newStatus = e.target.value;
+      try {
+        await updateDoc(doc(ordersRef, order.id), { status: newStatus });
+        toast(`Order updated: ${STATUS_LABELS[newStatus]}`);
+      } catch(err) { toast('Update failed', true); console.error(err); }
+    });
+
+    list.appendChild(card);
+  });
+}
+
+$('#addHhBtn').addEventListener('click', async () => {
+  const name = $('#hhName').value.trim();
+  if (!name) { toast('Enter a name first', true); return; }
+  const entry = {
+    id: uid(), name,
+    address: $('#hhAddr').value.trim(),
+    phone: $('#hhPhone').value.trim(),
+    defaultQty: parseFloat($('#hhQty').value) || 1,
+    ratePerUnit: parseFloat($('#hhRate').value) || 60,
+    slot: $('#hhSlot').value || 'morning'
+  };
+  households.push(entry);
+  ['#hhName', '#hhAddr', '#hhPhone', '#hhQty', '#hhRate'].forEach(s => $(s).value = '');
+  $('#hhSlot').value = 'morning';
+  renderHHList(); populateRptSelects();
+  await saveHouseholdsToCloud();
+  toast('Household added ✓');
+});
+
+$('#bulkBtn').addEventListener('click', () => {
+  const c = $('#bulkCard'); c.style.display = c.style.display === 'none' ? 'block' : 'none';
+});
+
+$('#bulkAddBtn').addEventListener('click', async () => {
+  const lines = $('#bulkTa').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { toast('Nothing to add', true); return; }
+  const added = lines.map(line => {
+    const parts = line.split(',').map(p => p.trim());
+    return {
+      id: uid(), name: parts[0] || 'Unnamed',
+      address: parts[1] || '',
+      phone: parts[2] || '',
+      defaultQty: parseFloat(parts[3]) || 1,
+      ratePerUnit: parseFloat(parts[4]) || 60,
+      slot: parts[5] || 'morning'
+    };
+  });
+  added.forEach(e => households.push(e));
+  $('#bulkTa').value = ''; $('#bulkCard').style.display = 'none';
+  renderHHList(); populateRptSelects();
+  await saveHouseholdsToCloud();
+  toast(added.length + ' households added ✓');
+});
+
+function renderHHList() {
+  const list = $('#hhList');
+  $('#hhCount').textContent = households.length;
+  if (!households.length) { list.innerHTML = '<div class="empty">No households yet.</div>'; return; }
+  
+  list.innerHTML = '';
+  households.forEach((h, i) => {
+    const isSkipped = !!skips[h.id];
+    const row = document.createElement('div');
+    row.className = 'hh-row' + (isSkipped ? ' hh-skipped' : '');
+    row.innerHTML = `
+      <div class="hh-info">
+        <div class="hh-name">
+          ${esc(h.name)}
+          ${isSkipped ? '<span class="skip-badge">⏸ Skipped Today</span>' : ''}
+        </div>
+        ${h.address ? `<div class="hh-addr">📍 ${esc(h.address)}</div>` : ''}
+        ${h.phone ? `<div class="hh-phone">📞 ${esc(h.phone)}</div>` : ''}
+        <div class="hh-meta">
+          <span class="meta-tag meta-qty">💧 ${parseFloat(h.defaultQty||1).toFixed(1)} L/day</span>
+          <span class="meta-tag meta-rate">₹${h.ratePerUnit||60}/L</span>
+          <span class="slot-badge ${h.slot||'morning'}">${slotLabel(h.slot||'morning')}</span>
+        </div>
+      </div>
+      <div class="hh-actions">
+        <button class="icon-btn" data-up="${h.id}" ${i===0?'disabled':''}>↑</button>
+        <button class="icon-btn" data-down="${h.id}" ${i===households.length-1?'disabled':''}>↓</button>
+        <button class="icon-btn icon-btn-skip ${isSkipped?'is-skipped':''}" data-skip="${h.id}" title="${isSkipped?'Resume today':'Skip today'}">${isSkipped?'▶':'⏸'}</button>
+        <button class="icon-btn" data-edit="${h.id}">✏️</button>
+        <button class="icon-btn icon-btn-red" data-del="${h.id}">✕</button>
+      </div>`;
+    list.appendChild(row);
+  });
+  
+  $$('[data-up]', list).forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.up;
+    const i = households.findIndex(h => h.id === id), ni = i - 1;
+    [households[i], households[ni]] = [households[ni], households[i]];
+    renderHHList(); await saveHouseholdsToCloud();
+  }));
+  $$('[data-down]', list).forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.down;
+    const i = households.findIndex(h => h.id === id), ni = i + 1;
+    [households[i], households[ni]] = [households[ni], households[i]];
+    renderHHList(); await saveHouseholdsToCloud();
+  }));
+  $$('[data-skip]', list).forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.skip;
+    const h = households.find(x => x.id === id); if (!h) return;
+    if (skips[id]) {
+      delete skips[id];
+      toast(`▶ ${h.name} resumed for today`);
+    } else {
+      skips[id] = true;
+      toast(`⏸ ${h.name} skipped for today`);
+    }
+    await saveSkipsToCloud(todayStr(), skips);
+    renderHHList(); refreshDash();
+    if (logDate === todayStr()) renderLog();
+  }));
+  $$('[data-edit]', list).forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.edit;
+    const h = households.find(x => x.id === id); if(!h) return;
+    editingId = id;
+    $('#editName').value = h.name || '';
+    $('#editAddr').value = h.address || '';
+    $('#editPhone').value = h.phone || '';
+    $('#editQty').value = h.defaultQty || 1;
+    $('#editRate').value = h.ratePerUnit || 60;
+    $('#editSlot').value = h.slot || 'morning';
+    $('#editModal').classList.add('open');
+  }));
+  $$('[data-del]', list).forEach(b => b.addEventListener('click', async () => {
+    households = households.filter(h => h.id !== b.dataset.del);
+    renderHHList(); populateRptSelects();
+    await saveHouseholdsToCloud(); toast('Removed');
+  }));
+}
+
+$('#editCancelBtn').addEventListener('click', () => $('#editModal').classList.remove('open'));
+$('#editModal').addEventListener('click', e => { if (e.target === $('#editModal')) $('#editModal').classList.remove('open'); });
+
+$('#editSaveBtn').addEventListener('click', async () => {
+  const name = $('#editName').value.trim();
+  if(!name) { toast('Name required', true); return; }
+  const i = households.findIndex(h => h.id === editingId); if(i < 0) return;
+  
+  households[i] = {
+    ...households[i], name,
+    address: $('#editAddr').value.trim(),
+    phone: $('#editPhone').value.trim(),
+    defaultQty: parseFloat($('#editQty').value) || 1,
+    ratePerUnit: parseFloat($('#editRate').value) || 60,
+    slot: $('#editSlot').value || 'morning'
+  };
+  $('#editModal').classList.remove('open');
+  renderHHList(); populateRptSelects();
+  await saveHouseholdsToCloud(); toast('Saved ✓');
+});
+
+// -- dashboard --
+function refreshDash() {
+  const slot = currentSlot();
+  let done = 0, litres = 0, lastT = null;
+  households.forEach(h => {
+    const e = deliveries[h.id] || {};
+    if (e.status === 'delivered') {
+      done++; litres += parseFloat(e.qty || h.defaultQty || 1);
+      if (!lastT || new Date(e.time) > new Date(lastT)) lastT = e.time;
+    }
+  });
+  
+  const total = households.length;
+  const slotHH = households.filter(h => householdInSlot(h, slot));
+  const slotDone = slotHH.filter(h => (deliveries[h.id]||{}).status === 'delivered').length;
+
+  $('#oDelivered').textContent = slotDone + '/' + slotHH.length;
+  $('#oLitres').textContent = litres.toFixed(1) + ' L';
+  $('#oPercent').textContent = (slotHH.length ? Math.round(slotDone / slotHH.length * 100) : 0) + '%';
+  $('#oLastTime').textContent = fmtTime(lastT);
+  
+  if (staffLoc && staffLoc.sharing && staffLoc.time) {
+    $('#oStaffStatus').textContent = 'On route';
+    $('#oLocAge').textContent = 'Updated ' + fmtAgo(staffLoc.time);
+  } else { 
+    $('#oStaffStatus').textContent = 'Idle'; 
+    $('#oLocAge').textContent = 'No GPS yet'; 
+  }
+  
+  const list = $('#oDashList'); list.innerHTML = '';
+  if (!households.length) { list.innerHTML = '<div class="empty">Add households to get started.</div>'; return; }
+
+  // Group by slot — exclude skipped
+  const groups = [
+    { key: 'morning', label: '🌅 Morning', hhs: households.filter(h => householdInSlot(h,'morning') && !skips[h.id]) },
+    { key: 'evening', label: '🌆 Evening', hhs: households.filter(h => householdInSlot(h,'evening') && !skips[h.id]) },
+  ];
+
+  groups.forEach(g => {
+    if (!g.hhs.length) return;
+    const isActive = g.key === slot;
+    const hdr = document.createElement('div');
+    hdr.className = 'slot-section-hdr';
+    hdr.innerHTML = `${g.label} <span style="color:var(--ink-light);font-weight:400;">(${g.hhs.filter(h=>(deliveries[h.id]||{}).status==='delivered').length}/${g.hhs.length})</span>${isActive ? '<span class="slot-now-pill" style="margin-left:8px;">ACTIVE</span>' : ''}`;
+    list.appendChild(hdr);
+
+    g.hhs.forEach((h, i) => {
+      const e = deliveries[h.id] || {};
+      const isDone = e.status === 'delivered';
+      const row = document.createElement('div'); row.className = 'route-row' + (isDone ? ' done' : '');
+      row.innerHTML = `
+        <div class="seq">${i+1}</div>
+        <div class="route-info"><div class="rname">${esc(h.name)}</div>${h.address ? `<div class="raddr">${esc(h.address)}</div>` : ''}</div>
+        <div class="route-right">
+          ${isDone ? `<div class="stamp-done">✓</div><div class="rtime">${fmtTime(e.time)}<br>${parseFloat(e.qty||h.defaultQty||1).toFixed(1)} L</div>` : '<span class="pending-badge">Pending</span>'}
+          <button class="icon-btn" data-fix="${h.id}" title="Toggle status">⇅</button>
+        </div>`;
+      list.appendChild(row);
+    });
+  });
+
+  // Skipped section — faded, shown at bottom
+  const skippedHH = households.filter(h => skips[h.id]);
+  if (skippedHH.length) {
+    const skipHdr = document.createElement('div');
+    skipHdr.className = 'slot-section-hdr';
+    skipHdr.style.cssText = 'opacity:.5;margin-top:6px;';
+    skipHdr.innerHTML = `⏸ Skipped Today <span style="color:var(--ink-light);font-weight:400;">(${skippedHH.length})</span>`;
+    list.appendChild(skipHdr);
+    skippedHH.forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'route-row dash-skipped-row';
+      row.innerHTML = `
+        <div class="seq" style="color:var(--ink-light);">—</div>
+        <div class="route-info">
+          <div class="rname">${esc(h.name)}</div>
+          ${h.address ? `<div class="raddr">${esc(h.address)}</div>` : ''}
+        </div>
+        <div class="route-right"><span class="skip-badge">⏸ Skipped</span></div>`;
+      list.appendChild(row);
+    });
+  }
+  
+  $$('[data-fix]', list).forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.fix, e = deliveries[id] || {};
+    deliveries[id] = e.status === 'delivered' 
+      ? { status: 'pending', qty: households.find(h=>h.id===id)?.defaultQty || 1 } 
+      : { status: 'delivered', qty: e.qty || households.find(h=>h.id===id)?.defaultQty || 1, time: new Date().toISOString() };
+    
+    refreshDash(); 
+    await saveDeliveriesToCloud(todayStr(), deliveries); 
+    toast('Status updated');
+  }));
+}
+
+function ensureMap() {
+  if (map || typeof L === 'undefined') return;
+  map = L.map('map', {zoomControl:true, attributionControl:true}).setView([20.59, 78.96], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(map);
+  setTimeout(() => map.invalidateSize(), 200);
+  updateMap();
+}
+
+function updateMap() {
+  if (!map) return;
+  if (staffLoc && staffLoc.lat != null && staffLoc.lng != null) {
+    const ll = [staffLoc.lat, staffLoc.lng];
+    if (!mapMarker) mapMarker = L.marker(ll).addTo(map); else mapMarker.setLatLng(ll);
+    map.setView(ll, 16);
+    $('#mapCap').textContent = 'Staff location — updated ' + fmtAgo(staffLoc.time);
+  } else { 
+    $('#mapCap').textContent = 'Waiting for staff to share location…'; 
+  }
+}
+
+// -- daily log --
+$('#logPrev').addEventListener('click', () => { const d=new Date(logDate); d.setDate(d.getDate()-1); logDate=d.toISOString().slice(0,10); renderLog(); });
+$('#logNext').addEventListener('click', () => { const d=new Date(logDate); d.setDate(d.getDate()+1); if(d<=new Date()){ logDate=d.toISOString().slice(0,10); renderLog(); } });
+
+async function renderLog() {
+  $('#logDateLabel').textContent = fmtDate(logDate);
+  const body = $('#logBody'); body.innerHTML = '';
+  const foot = $('#logFoot'); foot.innerHTML = '';
+  
+  if (!households.length) { 
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-light)">No households set up yet.</td></tr>'; 
+    return; 
+  }
+  
+  let delForDate = deliveries;
+  if (logDate !== todayStr()) {
+    const snap = await getDoc(doc(delRef, logDate));
+    delForDate = snap.exists() ? snap.data() : {};
+  }
+
+  let totalL = 0, totalAmt = 0;
+  const logSkips = logDate === todayStr() ? skips : {};
+  const groups = [
+    { key: 'morning', label: '🌅 Morning', hhs: households.filter(h => householdInSlot(h,'morning') && !logSkips[h.id]) },
+    { key: 'evening', label: '🌆 Evening', hhs: households.filter(h => householdInSlot(h,'evening') && !logSkips[h.id]) },
+  ];
+
+  let rowNum = 0;
+  for (const g of groups) {
+    if (!g.hhs.length) continue;
+    const slot = currentSlot();
+    const isActive = g.key === slot;
+    const hdrTr = document.createElement('tr');
+    hdrTr.innerHTML = `<td colspan="6" style="padding:10px 12px 4px;background:rgba(0,0,0,0.15);">
+      <span style="font-family:var(--font-m);font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-lt);">${g.label}</span>
+      ${isActive ? '<span class="slot-now-pill" style="margin-left:8px;">ACTIVE NOW</span>' : ''}
+    </td>`;
+    body.appendChild(hdrTr);
+
+    for (const h of g.hhs) {
+      rowNum++;
+      const e = delForDate[h.id] || { status: 'pending', qty: h.defaultQty || 1 };
+      const isDone = e.status === 'delivered';
+      const qty = parseFloat(e.qty || h.defaultQty || 1);
+      const rate = parseFloat(h.ratePerUnit || 60);
+      const amt = isDone ? qty * rate : 0;
+      if (isDone) { totalL += qty; totalAmt += amt; }
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="center">${rowNum}</td>
+        <td><strong>${esc(h.name)}</strong>${h.address?`<br><small style="color:var(--ink-light)">${esc(h.address)}</small>`:''}</td>
+        <td><span class="status-dot ${isDone?'s-done':'s-skip'}"></span>${isDone?'Delivered':'Pending'}</td>
+        <td class="num"><input class="log-qty-input" type="number" min="0.5" step="0.5" value="${qty.toFixed(1)}" data-lid="${h.id}" data-ldate="${logDate}" ${!isDone?'disabled':''}></td>
+        <td class="num">${isDone?'₹'+amt.toFixed(0):'—'}</td>
+        <td class="center"><button class="btn btn-xs ${isDone?'btn-outline btn-sm':'btn-green'}" data-ltoggle="${h.id}">${isDone?'Undo':'Mark ✓'}</button></td>`;
+      body.appendChild(tr);
+    }
+  }
+  
+  $$('[data-ltoggle]', body).forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.ltoggle;
+    let targetDel = delForDate;
+    if(logDate !== todayStr()) {
+       const snap = await getDoc(doc(delRef, logDate));
+       targetDel = snap.exists() ? snap.data() : {};
+    }
+    const e = targetDel[id] || {};
+    const h = households.find(x => x.id === id);
+    targetDel[id] = e.status === 'delivered' 
+        ? { status: 'pending', qty: h?.defaultQty || 1 } 
+        : { status: 'delivered', qty: e.qty || h?.defaultQty || 1, time: new Date().toISOString() };
+    
+    await saveDeliveriesToCloud(logDate, targetDel);
+    if(logDate === todayStr()) deliveries = targetDel;
+    renderLog(); toast('Updated');
+  }));
+  
+  $$('[data-lid]', body).forEach(inp => inp.addEventListener('change', async () => {
+    const id = inp.dataset.lid, date = inp.dataset.ldate;
+    let targetDel = delForDate;
+    if(date !== todayStr()) {
+       const snap = await getDoc(doc(delRef, date));
+       targetDel = snap.exists() ? snap.data() : {};
+    }
+    if (targetDel[id]) targetDel[id].qty = parseFloat(inp.value) || 1;
+    await saveDeliveriesToCloud(date, targetDel);
+    toast('Quantity updated');
+    renderLog();
+  }));
+  
+  foot.innerHTML = `<tr style="background:rgba(201,151,58,0.12);border-top:1px solid rgba(201,151,58,0.3)"><td colspan="3" style="color:#fff;font-size:.87rem"><strong>Total</strong></td><td class="num" style="color:var(--gold-lt)"><strong>${totalL.toFixed(1)} L</strong></td><td class="num" style="color:var(--gold-lt)"><strong>₹${totalAmt.toFixed(0)}</strong></td><td></td></tr>`;
+}
+
+// -- reports --
+function populateRptSelects() {
+  const sel = $('#rptHouse');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select household —</option>';
+  households.forEach(h => { const o = document.createElement('option'); o.value = h.id; o.textContent = h.name; sel.appendChild(o); });
+  sel.value = prev;
+
+  const msel = $('#rptMonth');
+  const pm = msel.value;
+  msel.innerHTML = '';
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    const o = document.createElement('option'); o.value = val; o.textContent = monthStr(d.getFullYear(), d.getMonth() + 1);
+    msel.appendChild(o);
+  }
+  if (pm) msel.value = pm;
+}
+
+$('#rptHouse').addEventListener('change', renderReport);
+$('#rptMonth').addEventListener('change', renderReport);
+
+async function renderReport() {
+  const hhId = $('#rptHouse').value;
+  const month = $('#rptMonth').value;
+  if (!month) return;
+  const [y, m] = month.split('-').map(Number);
+  const days = daysInMonth(y, m);
+  
+  const promises = [];
+  for (let d = 1; d <= days; d++) {
+    const key = `${y}-${pad(m)}-${pad(d)}`;
+    promises.push(getDoc(doc(delRef, key)).then(snap => ({ key, data: snap.exists() ? snap.data() : {} })));
+  }
+  const monthSnaps = await Promise.all(promises);
+
+  let rows = [], totalL = 0, totalAmt = 0, daysDone = 0;
+  
+  monthSnaps.forEach(({key, data}) => {
+    const hhs = hhId ? households.filter(h => h.id === hhId) : households;
+    hhs.forEach(h => {
+      const e = data[h.id];
+      if (e && e.status === 'delivered') {
+        const qty = parseFloat(e.qty || h.defaultQty || 1);
+        const rate = parseFloat(h.ratePerUnit || 60);
+        const amt = qty * rate;
+        rows.push({ date: key, hname: h.name, qty, rate, amt, time: e.time });
+        totalL += qty; totalAmt += amt; daysDone++;
+      }
+    });
+  });
+
+  const body = $('#rptBody'); body.innerHTML = '';
+  const foot = $('#rptFoot'); foot.innerHTML = '';
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-light)">No deliveries found for this period.</td></tr>'; return; }
+  
+  rows.sort((a, b) => a.date.localeCompare(b.date));
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDate(r.date)}</td><td>${esc(r.hname)}</td><td class="num">${r.qty.toFixed(1)}</td><td class="num">₹${r.rate}</td><td class="num">₹${r.amt.toFixed(0)}</td>`;
+    body.appendChild(tr);
+  });
+  foot.innerHTML = `<tr style="background:rgba(201,151,58,0.12);border-top:1px solid rgba(201,151,58,0.3)"><td colspan="2" style="color:#fff;font-size:.87rem"><strong>Total (${daysDone} entries)</strong></td><td class="num" style="color:var(--gold-lt)"><strong>${totalL.toFixed(1)} L</strong></td><td></td><td class="num" style="color:var(--gold-lt)"><strong>₹${totalAmt.toFixed(0)}</strong></td></tr>`;
+
+  const s = $('#rptSummary');
+  s.innerHTML = `
+    <div class="rscard"><div class="rsnum">${daysDone}</div><div class="rslabel">Deliveries</div></div>
+    <div class="rscard"><div class="rsnum">${totalL.toFixed(1)} L</div><div class="rslabel">Total milk</div></div>
+    <div class="rscard"><div class="rsnum">₹${totalAmt.toFixed(0)}</div><div class="rslabel">Total amount</div></div>
+    <div class="rscard"><div class="rsnum">₹${rows.length ? Math.round(totalAmt / rows.length) : 0}</div><div class="rslabel">Avg/delivery</div></div>`;
+}
+
+$('#genPdfBtn').addEventListener('click', async () => {
+  const hhId = $('#rptHouse').value;
+  const month = $('#rptMonth').value;
+  if (!month) { toast('Select a month first', true); return; }
+  if (!hhId) { toast('Please select a specific household to generate the bill', true); return; }
+  const [y, m] = month.split('-').map(Number);
+  const days = daysInMonth(y, m);
+  
+  const h0 = households.find(h => h.id === hhId);
+  if (!h0) { toast('Household not found', true); return; }
+
+  toast('Gathering cloud data...');
+
+  const promises = [];
+  for (let d = 1; d <= days; d++) {
+    const key = `${y}-${pad(m)}-${pad(d)}`;
+    promises.push(getDoc(doc(delRef, key)).then(snap => ({ key, d, data: snap.exists() ? snap.data() : {} })));
+  }
+  const monthSnaps = await Promise.all(promises);
+
+  let rowsHtml = '';
+  let totalL = 0, totalAmt = 0, rowNum = 1;
+  const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+  
+  monthSnaps.forEach(({d, data}) => {
+    const e = data[h0.id];
+    if (e && e.status === 'delivered') {
+      const qty = parseFloat(e.qty || h0.defaultQty || 1);
+      const rate = parseFloat(h0.ratePerUnit || 60);
+      const amt = qty * rate;
+      const dateStr = `${pad(d)} ${monthNames[m]} ${y}`;
+      
+      rowsHtml += `
+        <tr>
+          <td class="num">${rowNum++}</td>
+          <td class="date-col">${dateStr}</td>
+          <td class="qty">${qty.toFixed(1)}</td>
+          <td class="rate">${rate.toFixed(2)}</td>
+          <td class="amt">${amt.toFixed(2)}</td>
+        </tr>
+      `;
+      totalL += qty; totalAmt += amt;
+    }
+  });
+
+  if (totalL === 0) { toast('No deliveries found for this household in selected month', true); return; }
+
+  const invNo = `${y}${pad(m)}-${h0.name.replace(/\s+/g,'').toUpperCase().slice(0,4)}`;
+  const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const clientAddr = h0.address ? esc(h0.address) : 'Address not provided';
+  const clientPhone = h0.phone ? esc(h0.phone) : '';
+  // Use absolute URL for logo so it works in popup window
+  const cowLogoUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'logo.png';
+
+  const invoiceHTML = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <title>Aheera Milk – Monthly Bill - ${esc(h0.name)} - ${pad(m)}${y}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:      #1A3324;
+      --green-mid:  #254D36;
+      --green-light:#3D6B4F;
+      --sage:       #8FAF8A;
+      --gold:       #C8963E;
+      --gold-light: #E8C98A;
+      --ivory:      #FAF7F0;
+      --ivory-alt:  #F3EFE6;
+      --divider:    #DDD8CE;
+      --text:       #1C2B22;
+      --muted:      #6B7D6F;
+    }
+    @page { size: A4; margin: 0; }
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+      .no-print { display: none !important; }
+      html, body { background: white !important; padding: 0 !important; margin: 0 !important; display: block !important; min-height: unset; }
+      .page { width: 100% !important; max-width: 100% !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; display: block !important; }
+      .brand-header { padding: 28px 40px 22px !important; }
+      .body { padding: 24px 40px 20px !important; gap: 20px !important; display: block !important; }
+      .body > * { margin-bottom: 20px; }
+      .bill-title-strip { padding: 10px 40px !important; }
+      .table-wrap { display: block !important; }
+      table { page-break-inside: auto !important; }
+      tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+      thead { display: table-header-group !important; }
+      .total-row { page-break-inside: avoid !important; break-inside: avoid !important; page-break-before: avoid !important; }
+      .note-section { page-break-inside: avoid !important; break-inside: avoid !important; }
+      .upi-section { page-break-inside: avoid !important; break-inside: avoid !important; padding: 12px 0 8px !important; }
+      .upi-section a { padding: 10px 22px !important; font-size: 12px !important; }
+      .footer { position: static !important; margin-top: 20px !important; padding: 12px 40px !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+    }
+    body {
+      background: #D6D0C4; font-family: 'Inter', sans-serif; color: var(--text);
+      min-height: 100vh; padding: 40px 20px; display: flex; flex-direction: column; align-items: center;
+    }
+    .toolbar { display: flex; gap: 12px; margin-bottom: 28px; }
+    .btn { padding: 10px 24px; border: none; border-radius: 5px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: 0.04em; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.82; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .page { width: 720px; max-width: 100%; background: var(--ivory); box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; display: flex; flex-direction: column; }
+    .brand-header { background: var(--green); padding: 40px 56px 32px; display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; }
+    .brand-header::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E"); pointer-events: none; }
+    .brand-arc { font-family: 'EB Garamond', serif; font-size: 10px; font-style: italic; color: var(--sage); letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 10px; }
+    .cow-svg { width: 110px; height: 80px; margin-bottom: 12px; object-fit: contain;  }
+    .estd { font-family: 'Inter', sans-serif; font-size: 9.5px; color: var(--sage); letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 10px; }
+    .brand-name { font-family: 'EB Garamond', serif; font-size: 34px; font-weight: 600; color: #fff; letter-spacing: 0.22em; text-transform: uppercase; line-height: 1; margin-bottom: 6px; }
+    .brand-tagline { font-family: 'EB Garamond', serif; font-size: 13px; font-style: italic; color: var(--gold-light); letter-spacing: 0.08em; margin-bottom: 28px; }
+    .gold-rule { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin-bottom: 0; }
+    .bill-title-strip { background: var(--green-mid); text-align: center; padding: 14px 56px; border-bottom: 1px solid var(--green-light); }
+    .bill-title { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: var(--gold-light); }
+    .body { padding: 40px 56px; display: flex; flex-direction: column; gap: 32px; }
+    .meta-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .meta-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+    .meta-value { font-size: 13px; color: var(--text); font-weight: 500; }
+    .bill-no-badge { background: var(--green); color: var(--gold-light); font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; }
+    .billing-section { display: flex; justify-content: space-between; gap: 48px; align-items: flex-start; }
+    .billing-block { flex: 0 1 auto; }
+    .billing-block:first-child { flex: 1 1 auto; }
+    .billing-block:last-child { text-align: right; flex-shrink: 0; margin-left: auto; }
+    .billing-block { }
+    .billing-block:last-child { text-align: right; }
+    .billing-block:last-child .billing-eyebrow { justify-content: flex-end; }
+    .billing-block:last-child .billing-eyebrow::after { display: none; }
+    .billing-block:last-child .billing-eyebrow::before { content: ''; display: block; height: 1px; width: 28px; background: var(--gold-light); }
+    .billing-eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--gold); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .billing-eyebrow::after { content: ''; display: block; height: 1px; width: 28px; background: var(--gold-light); }
+    .client-name { font-family: 'EB Garamond', serif; font-size: 18px; font-weight: 600; color: var(--green); margin-bottom: 4px; }
+    .client-detail { font-size: 12px; color: var(--muted); line-height: 1.8; }
+    .h-rule { height: 1px; background: var(--divider); }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--green); }
+    thead th { font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-light); padding: 12px 14px; text-align: left; }
+    thead th:not(:first-child) { text-align: right; }
+    thead th:first-child { width: 44px; text-align: center; }
+    thead th:nth-child(2) { text-align: left !important; }
+    tbody tr { border-bottom: 1px solid var(--divider); }
+    tbody tr:nth-child(even) { background: var(--ivory-alt); }
+    tbody tr:nth-child(odd)  { background: var(--ivory); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 14px 14px; font-size: 13px; color: var(--text); vertical-align: middle; }
+    td.num { text-align: center; color: var(--muted); font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500; }
+    td.date-col { font-size: 12.5px; text-align: left; font-family: 'Inter', sans-serif; }
+    td.qty  { text-align: right; font-weight: 600; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); }
+    td.rate { text-align: right; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; }
+    td.amt  { text-align: right; font-weight: 700; color: var(--green); font-family: 'DM Mono', monospace; font-size: 13.5px; }
+    .total-row { display: flex; justify-content: flex-end; margin-top: 0; }
+    .total-box { width: 310px; border: 1px solid var(--divider); border-radius: 4px; overflow: hidden; }
+    .total-line { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--divider); font-size: 12.5px; }
+    .total-line:last-child { border-bottom: none; }
+    .total-line .lbl { color: var(--muted); }
+    .total-line .val { font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13.5px; letter-spacing: -0.01em; }
+    .total-line.grand { background: var(--green); padding: 13px 16px; }
+    .total-line.grand .lbl { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sage); font-weight: 600; }
+    .total-line.grand .val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 700; color: var(--gold-light); letter-spacing: -0.02em; }
+    .note-section { background: var(--ivory-alt); border-left: 3px solid var(--gold); border-radius: 0 4px 4px 0; padding: 14px 18px; }
+    .note-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--gold); font-weight: 600; margin-bottom: 5px; }
+    .note-text { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
+    .note-text strong { color: var(--text); font-style: normal; font-weight: 600; }
+    .footer { 
+      background: var(--green); 
+      padding: 14px 56px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-top: auto; 
+      flex-shrink: 0; 
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .footer-left { 
+      font-size: 12px; 
+      color: var(--sage); 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
+    .footer-left strong {
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+    .footer-cow-logo {
+      height: 28px;
+      width: auto;
+      max-width: 42px;
+      object-fit: contain;
+      flex-shrink: 0;
+      vertical-align: middle;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+    }
+    .footer-right { 
+      display: flex; 
+      align-items: center; 
+    }
+    .tensorloom-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #141417 !important;
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      border-radius: 9999px;
+      padding: 3.5px 10px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: all 0.2s ease;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .tensorloom-pill-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(229, 168, 75, 0.3) !important;
+      border-color: rgba(229, 168, 75, 0.45) !important;
+    }
+    .tl-powered {
+      font-size: 10px;
+      color: #9E9EA7;
+      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+    }
+    .tl-icon-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 15px;
+      height: 15px;
+      background: #1e2028;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3.5px;
+      flex-shrink: 0;
+    }
+    .tl-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+      font-family: 'Inter', sans-serif;
+    }
+    .tl-badge {
+      background: #E5A84B;
+      color: #111113;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 3px;
+      letter-spacing: 0.2px;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.1;
+    }
+  </style>
+  </head>
+  <body>
+  <div class="toolbar no-print">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  <div class="page">
+    <div class="brand-header">
+      <div class="brand-arc">Fresh Every Day</div>
+      <img src="${cowLogoUrl}" class="cow-svg" alt="Aheera Milk Logo" onerror="this.style.display='none'">
+      <div class="estd">Estd. 2026</div>
+      <div class="brand-name">Aheera Milk</div>
+      <div class="brand-tagline">The Vaidik Way of Purity</div>
+      <div class="gold-rule"></div>
+    </div>
+    <div class="bill-title-strip"><div class="bill-title">Monthly Bill</div></div>
+    <div class="body">
+      <div class="meta-row">
+        <div class="meta-left">
+          <div class="meta-label">Date Generated</div>
+          <div class="meta-value">${todayStr}</div>
+        </div>
+        <div class="bill-no-badge">Bill #MB-${invNo}</div>
+      </div>
+      <div class="billing-section">
+        <div class="billing-block">
+          <div class="billing-eyebrow">Billed To</div>
+          <div class="client-name">${esc(h0.name)}</div>
+          <div class="client-detail">
+            ${clientAddr}<br>
+            ${clientPhone ? clientPhone + '<br>' : ''}
+          </div>
+        </div>
+        <div class="billing-block">
+          <div class="billing-eyebrow">From</div>
+          <div class="client-name">Aheera Milk</div>
+          <div class="client-detail">
+            Giridih, Jharkhand<br>
+            +91 79923 60814
+          </div>
+        </div>
+      </div>
+      <div class="h-rule"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th style="text-align:right">Quantity (L)</th>
+              <th style="text-align:right">Rate / L (₹)</th>
+              <th style="text-align:right">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+      <div class="total-row">
+        <div class="total-box">
+          <div class="total-line">
+            <div class="lbl">Total Quantity</div>
+            <div class="val">${totalL.toFixed(1)} L</div>
+          </div>
+          <div class="total-line">
+            <div class="lbl">Subtotal</div>
+            <div class="val">₹${totalAmt.toFixed(2)}</div>
+          </div>
+          <div class="total-line">
+            <div class="lbl">Previous Balance</div>
+            <div class="val">₹0.00</div>
+          </div>
+          <div class="total-line grand">
+            <div class="lbl">Total Due</div>
+            <div class="val">₹${totalAmt.toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="note-section">
+        <div class="note-label">Note</div>
+        <div class="note-text">
+          Thank you for being a valued customer of <strong>Aheera Milk</strong>! For any queries regarding this bill or your delivery, please call us at <strong>+91 79923 60814</strong>. Payment may be made via cash, UPI, or bank transfer.
+        </div>
+      </div>
+      <div class="upi-section" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 0 8px;">
+        <div style="font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#6B7D6F;font-weight:600;">Pay via UPI</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <a href="phonepe://pay?pa=7992360814@ibl&pn=Aheera+Milk&am=${totalAmt.toFixed(2)}&cu=INR&tn=Milk+Bill+${invNo}" style="display:inline-flex;align-items:center;gap:7px;background:#5f259f;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.02em;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6" stroke="#5f259f" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>PhonePe</a>
+          <a href="tez://upi/pay?pa=7992360814@ibl&pn=Aheera+Milk&am=${totalAmt.toFixed(2)}&cu=INR&tn=Milk+Bill+${invNo}" style="display:inline-flex;align-items:center;gap:7px;background:#1a73e8;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.02em;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6" stroke="#1a73e8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>GPay</a>
+          <a href="paytmmp://pay?pa=7992360814@ibl&pn=Aheera+Milk&am=${totalAmt.toFixed(2)}&cu=INR&tn=Milk+Bill+${invNo}" style="display:inline-flex;align-items:center;gap:7px;background:#002970;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.02em;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6" stroke="#002970" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Paytm</a>
+          <a href="upi://pay?pa=7992360814@ibl&pn=Aheera+Milk&am=${totalAmt.toFixed(2)}&cu=INR&tn=Milk+Bill+${invNo}" style="display:inline-flex;align-items:center;gap:7px;background:#1A3324;color:#E8C98A;text-decoration:none;padding:10px 18px;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.02em;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#E8C98A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Other UPI</a>
+        </div>
+        <div style="background:#f3efe6;border:1px dashed #c8963e;border-radius:6px;padding:10px 20px;text-align:center;margin-top:2px;">
+          <div style="font-family:'Inter',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.16em;color:#8FAF8A;font-weight:600;margin-bottom:4px;">Or pay directly to this UPI ID</div>
+          <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:#1A3324;letter-spacing:0.04em;">7992360814@ibl</div>
+          <div style="font-family:'Inter',sans-serif;font-size:10px;color:#6B7D6F;margin-top:3px;">Amount: <strong style="font-family:'DM Mono',monospace;color:#1A3324;">₹${totalAmt.toFixed(2)}</strong> · Name: Aheera Milk</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="footer-left">
+        <img src="${cowLogoUrl}" class="footer-cow-logo" alt="Aheera Logo" onerror="this.style.display='none'">
+        <span><strong>Aheera Milk</strong> · Giridih, Jharkhand</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://tensorloom.netlify.app/" target="_blank" rel="noopener noreferrer" class="tensorloom-pill-btn">
+          <span class="tl-powered">Powered by</span>
+          <span class="tl-icon-box">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.5 7L3.5 12L8.5 17" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M15.5 7L20.5 12L15.5 17" stroke="#E5A84B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="tl-name">TensorLoom</span>
+          <span class="tl-badge">AI</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  </body>
+  </html>
+  `;
+
+  const printWin = window.open('', '_blank', 'width=800,height=900,scrollbars=yes');
+  if (printWin) {
+    printWin.document.write(invoiceHTML);
+    printWin.document.close();
+    // Wait for fonts & image to load before printing
+    printWin.onload = () => {
+      setTimeout(() => { printWin.focus(); printWin.print(); }, 800);
+    };
+    toast('Invoice opened ✓ — use Print → Save as PDF');
+  } else {
+    toast('⚠️ Pop-up blocked! Please allow pop-ups for this site and try again.', true);
+  }
+});
+
+initSystem();
+
+</script>
+</body>
+</html>

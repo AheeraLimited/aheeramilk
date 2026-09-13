@@ -1557,8 +1557,212 @@
       text-align: center;
       outline: none;
     }
+    /* ═════════════════════════════════════════════════════════════════
+       DAILY LOG SECTION (RESPONSIVE NO-SCROLL CARDS SYSTEM)
+       ═════════════════════════════════════════════════════════════════ */
+    .daily-log-view-wrap {
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .daily-log-cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .log-shift-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      color: var(--gold-bright);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .log-shift-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .log-shift-card-badge {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 50px;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .daily-log-item-card {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .daily-log-item-card.is-done {
+      border-left: 3px solid #10B981;
+      background: rgba(16, 185, 129, 0.03);
+    }
+    .daily-log-item-card.is-pending {
+      border-left: 3px solid #F59E0B;
+      background: rgba(245, 158, 11, 0.02);
+    }
+    .log-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .log-item-identity {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+    .log-item-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .log-item-details {
+      min-width: 0;
+      flex: 1;
+    }
+    .log-item-name {
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .log-item-addr {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .log-item-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .log-item-status-pill.done {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #6EE7A3;
+    }
+    .log-item-status-pill.pending {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #FCD34D;
+    }
+    .log-item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+    }
+    .log-item-metrics {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .log-metric-col {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .log-metric-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .log-qty-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .log-qty-input-box {
+      width: 58px;
+      padding: 4px 6px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      color: #FFFFFF;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.86rem;
+      text-align: center;
+      outline: none;
+    }
     .log-qty-input-box:focus {
       border-color: var(--gold);
+    }
+    .log-qty-unit {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--gold-bright);
+      font-weight: 700;
+    }
+    .log-amt-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .log-amt-display.done {
+      color: #FFFFFF;
+    }
+    .log-amt-display.pending {
+      color: rgba(255, 255, 255, 0.35);
+    }
+    .log-item-action {
+      flex-shrink: 0;
+      margin-left: auto;
     }
     .btn-log-action-pill {
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1570,6 +1774,9 @@
       border-radius: 50px;
       cursor: pointer;
       transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
     .btn-log-action-pill.done {
       background: rgba(46, 158, 91, 0.15);
@@ -1579,6 +1786,72 @@
     .btn-log-action-pill:hover {
       border-color: var(--gold);
       background: rgba(255, 255, 255, 0.12);
+    }
+    .daily-log-total-summary-card {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .log-total-label {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+    }
+    .log-total-values {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .log-total-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .log-total-stat-lbl {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .log-total-stat-val {
+      font-family: 'DM Mono', monospace;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--gold-bright);
+    }
+
+    /* Desktop View Optimization */
+    @media (min-width: 768px) {
+      .daily-log-item-card {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 10px 16px;
+      }
+      .log-item-top {
+        flex: 1;
+        width: auto;
+      }
+      .log-item-bottom {
+        flex: 1;
+        width: auto;
+        padding-top: 0;
+        border-top: none;
+        justify-content: flex-end;
+        gap: 18px;
+        flex-wrap: nowrap;
+      }
     }
 
     /* ═════════════════════════════════════════════════════════════════
@@ -3936,6 +4209,75 @@
       border-color: rgba(34, 197, 94, 0.35) !important;
       color: #15803d !important;
       font-weight: 700 !important;
+    }
+    body.light-theme .daily-log-item-card {
+      background: #FFFFFF !important;
+      border: 1px solid rgba(14, 42, 25, 0.1) !important;
+      box-shadow: 0 2px 10px rgba(9, 30, 17, 0.04) !important;
+    }
+    body.light-theme .daily-log-item-card.is-done {
+      border-left: 3px solid #16A34A !important;
+      background: #FAFCFA !important;
+    }
+    body.light-theme .daily-log-item-card.is-pending {
+      border-left: 3px solid #D97706 !important;
+      background: #FFFDF9 !important;
+    }
+    body.light-theme .log-shift-card-header {
+      background: #FAF7F0 !important;
+      border: 1px solid rgba(14, 42, 25, 0.08) !important;
+      color: #855e08 !important;
+    }
+    body.light-theme .log-shift-card-badge {
+      background: rgba(14, 42, 25, 0.08) !important;
+      color: #4B5D51 !important;
+    }
+    body.light-theme .log-item-num {
+      background: #F3EDE0 !important;
+      color: #4B5D51 !important;
+    }
+    body.light-theme .log-item-name {
+      color: #09170E !important;
+      font-weight: 700 !important;
+    }
+    body.light-theme .log-item-addr {
+      color: #4B5D51 !important;
+    }
+    body.light-theme .log-item-status-pill.done {
+      background: rgba(34, 197, 94, 0.12) !important;
+      border: 1px solid rgba(34, 197, 94, 0.3) !important;
+      color: #15803d !important;
+    }
+    body.light-theme .log-item-status-pill.pending {
+      background: rgba(217, 119, 6, 0.12) !important;
+      border: 1px solid rgba(217, 119, 6, 0.3) !important;
+      color: #B45309 !important;
+    }
+    body.light-theme .log-item-bottom {
+      border-top-color: rgba(14, 42, 25, 0.08) !important;
+    }
+    body.light-theme .log-metric-label {
+      color: #7A8E80 !important;
+    }
+    body.light-theme .log-amt-display.done {
+      color: #09170E !important;
+    }
+    body.light-theme .log-amt-display.pending {
+      color: #9CA3AF !important;
+    }
+    body.light-theme .daily-log-total-summary-card {
+      background: #FAF5E8 !important;
+      border: 1.5px solid rgba(180, 130, 20, 0.35) !important;
+      box-shadow: 0 4px 14px rgba(180, 130, 20, 0.08) !important;
+    }
+    body.light-theme .log-total-label {
+      color: #09170E !important;
+    }
+    body.light-theme .log-total-stat-lbl {
+      color: #4B5D51 !important;
+    }
+    body.light-theme .log-total-stat-val {
+      color: #855e08 !important;
     }
     body.light-theme .log-tfoot-row {
       background: rgba(212, 175, 55, 0.14) !important;
@@ -6593,26 +6935,14 @@
         </button>
       </div>
 
-      <!-- Table with # | HOUSEHOLD | STATUS | QTY (L) | AMOUNT | ACTION -->
-      <div class="log-table-container">
-        <table class="log-data-table">
-          <thead>
-            <tr>
-              <th style="width:40px; text-align:center;">#</th>
-              <th>HOUSEHOLD</th>
-              <th>STATUS</th>
-              <th style="text-align:right;">QTY (L)</th>
-              <th style="text-align:right;">AMOUNT</th>
-              <th style="text-align:center;">ACTION</th>
-            </tr>
-          </thead>
-          <tbody id="dailyLogTableBody">
-            <!-- Rendered matching screenshot with Morning / Evening groups -->
-          </tbody>
-          <tfoot id="dailyLogTableFoot">
-            <!-- Total summary row -->
-          </tfoot>
-        </table>
+      <!-- Responsive Cards View: HOUSEHOLD | STATUS | QTY (L) | AMOUNT | ACTION -->
+      <div class="daily-log-view-wrap">
+        <div id="dailyLogTableBody" class="daily-log-cards-container">
+          <!-- Rendered matching screenshot with Morning / Evening groups -->
+        </div>
+        <div id="dailyLogTableFoot" class="daily-log-foot-container">
+          <!-- Total summary row -->
+        </div>
       </div>
     </div>
 
@@ -7715,6 +8045,16 @@
       const day = d.getDate();
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
       return `${day} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    };
+
+    window.formatDateDDMMYY = function(isoStr) {
+      if (!isoStr) return '';
+      const parts = String(isoStr).split('-');
+      if (parts.length < 3) return isoStr;
+      const dd = String(parseInt(parts[2], 10)).padStart(2, '0');
+      const mm = String(parseInt(parts[1], 10)).padStart(2, '0');
+      const yy = String(parts[0]).slice(-2);
+      return `${dd}/${mm}/${yy}`;
     };
 
     window.cleanWaPhone = function(phoneStr) {
@@ -9844,7 +10184,7 @@
       if (!tbody) return;
 
       if (!window.households.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-dim);">No households registered in delivery route.</td></tr>';
+        tbody.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-dim); background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.08);">No households registered in delivery route.</div>';
         if (tfoot) tfoot.innerHTML = '';
         return;
       }
@@ -9915,11 +10255,10 @@
         if (!g.hhs.length) return;
 
         rowsHtml += `
-          <tr>
-            <td colspan="6" class="log-shift-divider">
-              ${g.icon} ${g.label}
-            </td>
-          </tr>
+          <div class="log-shift-card-header">
+            <div class="log-shift-card-title">${g.icon} <span>${g.label} ROUTE</span></div>
+            <span class="log-shift-card-badge">${g.hhs.length} households</span>
+          </div>
         `;
 
         g.hhs.forEach(h => {
@@ -9936,28 +10275,41 @@
           }
 
           rowsHtml += `
-            <tr id="logRow_${h.id}">
-              <td class="log-cell-idx">${rowNum}</td>
-              <td>
-                <div class="log-cell-name">${h.name}</div>
-                <div class="log-cell-addr">${h.address || 'Giridih'}</div>
-              </td>
-              <td>
-                <span class="status-dot-indicator ${isDone ? 'done' : 'pending'}"></span>
-                <span class="log-cell-status ${isDone ? 'done' : 'pending'}">${isDone ? 'Delivered' : 'Pending'}</span>
-              </td>
-              <td style="text-align:right;">
-                <input type="number" step="0.5" min="0.5" inputmode="decimal" class="log-qty-input-box" value="${qty.toFixed(1)}" onchange="updateDailyLogQty('${h.id}', this.value)" placeholder="1.0">
-              </td>
-              <td class="log-cell-amt ${isDone ? 'done' : 'pending'}">
-                ${isDone ? '₹' + amount.toFixed(0) : '—'}
-              </td>
-              <td style="text-align:center;">
-                <button class="btn-log-action-pill ${isDone ? 'done' : ''}" onclick="toggleDailyLogDelivery('${h.id}')">
-                  ${isDone ? 'Undo' : 'Mark Done'}
-                </button>
-              </td>
-            </tr>
+            <div class="daily-log-item-card ${isDone ? 'is-done' : 'is-pending'}" id="logRow_${h.id}">
+              <div class="log-item-top">
+                <div class="log-item-identity">
+                  <span class="log-item-num">#${rowNum}</span>
+                  <div class="log-item-details">
+                    <div class="log-item-name">${h.name}</div>
+                    <div class="log-item-addr"><i class="fa-solid fa-location-dot" style="font-size:0.68rem; opacity:0.65; margin-right:3px;"></i>${h.address || 'Giridih'}</div>
+                  </div>
+                </div>
+                <div class="log-item-status-pill ${isDone ? 'done' : 'pending'}">
+                  <span class="status-dot-indicator ${isDone ? 'done' : 'pending'}"></span>
+                  <span class="log-status-text">${isDone ? 'Delivered' : 'Pending'}</span>
+                </div>
+              </div>
+              <div class="log-item-bottom">
+                <div class="log-item-metrics">
+                  <div class="log-metric-col">
+                    <label class="log-metric-label">QTY</label>
+                    <div class="log-qty-input-wrap">
+                      <input type="number" step="0.5" min="0.5" inputmode="decimal" class="log-qty-input-box" value="${qty.toFixed(1)}" onchange="updateDailyLogQty('${h.id}', this.value)" placeholder="1.0">
+                      <span class="log-qty-unit">L</span>
+                    </div>
+                  </div>
+                  <div class="log-metric-col">
+                    <label class="log-metric-label">AMOUNT</label>
+                    <div class="log-amt-display ${isDone ? 'done' : 'pending'}">${isDone ? '₹' + amount.toFixed(0) : '—'}</div>
+                  </div>
+                </div>
+                <div class="log-item-action">
+                  <button class="btn-log-action-pill ${isDone ? 'done' : ''}" onclick="toggleDailyLogDelivery('${h.id}')">
+                    ${isDone ? '<i class="fa-solid fa-rotate-left"></i> Undo' : '<i class="fa-solid fa-check"></i> Mark Done'}
+                  </button>
+                </div>
+              </div>
+            </div>
           `;
         });
       });
@@ -9966,12 +10318,19 @@
 
       if (tfoot) {
         tfoot.innerHTML = `
-          <tr class="log-tfoot-row">
-            <td colspan="3" class="log-foot-title">Total</td>
-            <td class="log-foot-litres">${totalLitres.toFixed(1)} L</td>
-            <td class="log-foot-amt">₹${totalAmount.toFixed(0)}</td>
-            <td></td>
-          </tr>
+          <div class="daily-log-total-summary-card">
+            <div class="log-total-label"><i class="fa-solid fa-chart-pie" style="color:var(--gold-bright); margin-right:8px;"></i> Shift Total</div>
+            <div class="log-total-values">
+              <div class="log-total-stat">
+                <span class="log-total-stat-lbl">Delivered:</span>
+                <span class="log-total-stat-val">${totalLitres.toFixed(1)} L</span>
+              </div>
+              <div class="log-total-stat">
+                <span class="log-total-stat-lbl">Revenue:</span>
+                <span class="log-total-stat-val">₹${totalAmount.toFixed(0)}</span>
+              </div>
+            </div>
+          </div>
         `;
       }
     };
@@ -10223,7 +10582,7 @@
 
       tbody.innerHTML = rows.map(r => `
         <tr>
-          <td class="rpt-cell-date">${window.formatDateLabel(r.date)}</td>
+          <td class="rpt-cell-date">${window.formatDateDDMMYY(r.date)}</td>
           <td class="rpt-cell-name"><strong>${r.hname}</strong></td>
           <td class="rpt-cell-qty">${r.qty.toFixed(1)}</td>
           <td class="rpt-cell-rate">₹${r.rate}</td>
@@ -10264,11 +10623,11 @@
       }
     };
 
-    window.generatePdfMonthlyBill = function() {
+    window.generatePdfMonthlyBill = function(targetHhId, targetMonthVal) {
       const selHouse = document.getElementById('rptHouse');
       const selMonth = document.getElementById('rptMonth');
       const extraDueEl = document.getElementById('rptExtraDue');
-      const hhId = selHouse ? selHouse.value : '';
+      const hhId = targetHhId || (selHouse ? selHouse.value : '');
       if (!hhId) {
         window.showToast('Please select a specific household above to generate the bill', true);
         return;
@@ -10277,7 +10636,7 @@
       const h0 = window.households.find(x => x.id === hhId);
       if (!h0) return;
 
-      const monthVal = selMonth ? selMonth.value : new Date().toISOString().slice(0, 7);
+      const monthVal = targetMonthVal || (selMonth ? selMonth.value : '') || new Date().toISOString().slice(0, 7);
       const [y, m] = monthVal.split('-').map(Number);
       const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
       const days = new Date(y, m, 0).getDate();
@@ -10317,7 +10676,7 @@
 
         if (isDone) {
           const amt = qty * rate;
-          const dateStr = `${String(d).padStart(2, '0')} ${monthNames[m]} ${y}`;
+          const dateStr = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${String(y).slice(-2)}`;
           rowsHtml += `
             <tr>
               <td class="num">${rowNum++}</td>
@@ -10342,7 +10701,17 @@
       const clientAddr = h0.address ? h0.address : 'Giridih, Jharkhand';
       const clientPhone = h0.phone ? h0.phone : '';
       const cowLogoUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'logo_old.png';
-      const previousDue = extraDueEl ? (parseFloat(extraDueEl.value) || 0) : 0;
+      let previousDue = 0;
+      try {
+        const savedDueMap = JSON.parse(localStorage.getItem('aheera_household_dues') || '{}');
+        if (hhId && savedDueMap[hhId] !== undefined) {
+          previousDue = parseFloat(savedDueMap[hhId]) || 0;
+        } else if (extraDueEl) {
+          previousDue = parseFloat(extraDueEl.value) || 0;
+        }
+      } catch(e) {
+        previousDue = extraDueEl ? (parseFloat(extraDueEl.value) || 0) : 0;
+      }
       const grandTotalDue = totalAmt + previousDue;
 
       const invoiceHTML = `
@@ -11076,8 +11445,8 @@
 
             <!-- Single Row Footer Actions -->
             <div class="hh-card-footer-actions">
-              <button class="btn-hh-action" onclick="window.promptEditDue('${h.id}')" title="Settle / Clear Dues">
-                <i class="fa-solid fa-receipt"></i> Dues
+              <button class="btn-hh-action" onclick="window.generateHouseholdPdfBill('${h.id}')" title="Generate & Print Monthly Bill">
+                <i class="fa-solid fa-file-invoice"></i> Bill
               </button>
               <button class="btn-hh-action" onclick="window.closeHouseholdSearchModal(); window.openEditModal('${h.id}')" title="Edit Customer Details">
                 <i class="fa-solid fa-pen"></i> Edit
@@ -11089,6 +11458,12 @@
           </div>
         `;
       }).join('');
+    };
+
+    window.generateHouseholdPdfBill = function(hhId) {
+      const selMonth = document.getElementById('hhSearchMonth');
+      const monthVal = selMonth ? selMonth.value : new Date().toISOString().slice(0, 7);
+      window.generatePdfMonthlyBill(hhId, monthVal);
     };
 
     window.sendHouseholdWhatsAppBill = function(hhId) {

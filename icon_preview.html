@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aheera Store — App Icon Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #111;
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    h1 {
+      color: #e5c378;
+      font-size: 1.4rem;
+      margin-bottom: 24px;
+    }
+    .grid {
+      display: flex;
+      gap: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 0.85rem;
+      color: #ccc;
+      font-weight: 600;
+    }
+    /* iOS Squircle Mockup */
+    .ios-squircle {
+      width: 120px;
+      height: 120px;
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .ios-squircle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* Android Circle Mockup */
+    .android-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .android-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .instructions {
+      max-width: 500px;
+      margin-top: 30px;
+      background: #18261e;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 20px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .instructions strong {
+      color: #f5e5b8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Aheera Store — New App Icon (Green + Golden Crest)</h1>
+  
+  <div class="grid">
+    <div class="card">
+      <span class="card-title">📱 iOS Home Screen (Squircle)</span>
+      <div class="ios-squircle">
+        <img src="./apple-touch-icon.png?v=19" alt="iOS Icon">
+      </div>
+      <span style="font-size: 0.75rem; color: #aaa;">Aheera Store</span>
+    </div>
+
+    <div class="card">
+      <span class="card-title">🤖 Android Home Screen (Circle)</span>
+      <div class="android-circle">
+        <img src="./logo_app_512.png?v=19" alt="Android Icon">
+      </div>
+      <span style="font-size: 0.75rem; color: #aaa;">Aheera Store</span>
+    </div>
+
+    <div class="card">
+      <span class="card-title">🖼 Raw Icon Asset (512x512)</span>
+      <div style="width: 120px; height: 120px; border-radius: 8px; overflow: hidden;">
+        <img src="./logo.png?v=19" alt="Raw Icon" style="width: 100%; height: 100%;">
+      </div>
+      <span style="font-size: 0.75rem; color: #aaa;">logo.png</span>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <strong>📲 How to force iOS/Safari to refresh the icon:</strong><br>
+    1. Long-press and <strong>Delete</strong> the previous Aheera Store bookmark from your iPhone home screen.<br>
+    2. Open Safari and go to <a href="http://192.168.1.5:8000/" style="color: #4ade80;">http://192.168.1.5:8000/</a>.<br>
+    3. Tap the <strong>Share button (square with arrow)</strong> ➔ scroll down and tap <strong>"Add to Home Screen"</strong>.<br>
+    4. Safari will now use the new green golden crest icon!
+  </div>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aheera Store — Welcome Screen Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 30px 15px;
+      background: #0b150f;
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #e5c378;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .preview-container {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      background: #15241b;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 20px;
+      padding: 16px;
+      text-align: center;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      color: #F5E5B8;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .lottie-box {
+      width: 375px;
+      height: 720px;
+      background: #ffffff;
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    }
+    .lottie-inner-player {
+      width: 100%;
+      height: 100%;
+    }
+    .lottie-inner-player svg {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+    }
+
+    /* ═════════════════════════════════════════════════════════════════
+       VIDEO-ACCURATE LENS FLARE / STARBURST RIM SHINE (the_the_reference_of_the_attac.mp4)
+       ═════════════════════════════════════════════════════════════════ */
+    .aheera-flare-stage {
+      position: absolute;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 204px;
+      height: 164px;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .aheera-flare-stage.is-active {
+      opacity: 1;
+    }
+
+    /* Moving Lens Flare / Starburst Unit */
+    .aheera-starburst-flare {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      animation: starburstTravelPath 4.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Keyframed travel from top-left tip -> along leaf rim -> to bottom-right tip */
+    @keyframes starburstTravelPath {
+      0% {
+        top: 2%;
+        left: 5%;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+      }
+      8% {
+        top: 2%;
+        left: 5%;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1) rotate(15deg);
+      }
+      24% {
+        top: 14%;
+        left: 36%;
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(1) rotate(45deg);
+      }
+      38% {
+        top: 21%;
+        left: 68%;
+        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(0.95) rotate(75deg);
+      }
+      52% {
+        top: 96%;
+        left: 95%;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2) rotate(120deg);
+      }
+      60% {
+        top: 96%;
+        left: 95%;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3) rotate(140deg);
+      }
+      100% {
+        top: 2%;
+        left: 5%;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.1) rotate(180deg);
+      }
+    }
+
+    /* Brilliant White/Gold Core Dot */
+    .flare-core-dot {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      box-shadow: 0 0 10px #FFFFFF, 0 0 20px #FFD700, 0 0 32px #FFA500;
+      z-index: 3;
+    }
+
+    /* Horizontal Anamorphic Optical Flare Streak */
+    .flare-anamorphic-beam {
+      position: absolute;
+      width: 90px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 235, 170, 0.4) 20%, #FFFFFF 50%, rgba(255, 235, 170, 0.4) 80%, transparent 100%);
+      box-shadow: 0 0 8px #FFD700;
+      filter: drop-shadow(0 0 4px #FFF);
+      z-index: 2;
+    }
+
+    /* 4-Point Star Rays Cross */
+    .flare-star-cross {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .star-ray {
+      position: absolute;
+      background: linear-gradient(to right, transparent, #FFFFFF 50%, transparent);
+      box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+      border-radius: 99px;
+    }
+    .star-ray.r-horizontal {
+      width: 44px;
+      height: 2.2px;
+    }
+    .star-ray.r-vertical {
+      width: 2.2px;
+      height: 44px;
+      background: linear-gradient(to bottom, transparent, #FFFFFF 50%, transparent);
+    }
+    .star-ray.r-diag1 {
+      width: 26px;
+      height: 1.5px;
+      transform: rotate(45deg);
+    }
+    .star-ray.r-diag2 {
+      width: 26px;
+      height: 1.5px;
+      transform: rotate(-45deg);
+    }
+
+    /* Soft Warm Halo */
+    .flare-halo {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 215, 0, 0.6) 35%, rgba(255, 180, 0, 0.2) 65%, transparent 100%);
+      filter: blur(2px);
+      z-index: 1;
+    }
+
+    /* Specular Light Reflection across Cow Body Surface */
+    .crest-light-sheen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-mask-image: url('./logo_old.png');
+      -webkit-mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-image: url('./logo_old.png');
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
+      background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.42) 48%, rgba(255, 235, 170, 0.35) 54%, transparent 70%);
+      background-size: 260% 260%;
+      mix-blend-mode: screen;
+      opacity: 0.85;
+      animation: surfaceSheenSweep 4.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes surfaceSheenSweep {
+      0% { background-position: 200% 200%; }
+      10% { background-position: 180% 180%; }
+      52% { background-position: -80% -80%; }
+      100% { background-position: -80% -80%; }
+    }
+
+    /* Typography Overlay pushed to bottom with header font */
+    .lottie-luxury-overlay {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translate(-50%, 14px);
+      width: 100%;
+      padding: 0 20px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 20;
+    }
+    .lottie-luxury-overlay.is-visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .anim-brand-title {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.95rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: #072716;
+      margin: 0;
+      line-height: 1.15;
+    }
+    .anim-brand-sub {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #9E7B1D;
+      margin-top: 6px;
+    }
+    .btn-replay {
+      margin-top: 15px;
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #d4af37, #9e7b1d);
+      border: none;
+      border-radius: 99px;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <h1>Aheera Welcome Screen — Clean Fullscreen Alignment</h1>
+  
+  <div class="preview-container">
+    <div class="card">
+      <div class="card-title">✨ Full Bleed Wave + Perfectly Centered Golden Crest + Bottom Typography</div>
+      <div class="lottie-box" id="aheeraScreenBox">
+        <!-- Lottie Waves + Base Emblem -->
+        <div id="aheeraLottiePlayer" class="lottie-inner-player"></div>
+
+        <!-- Video-Accurate Starburst Lens Flare & Surface Sheen -->
+        <div class="aheera-flare-stage" id="aheeraFlareStage">
+          <!-- Metallic Surface Specular Sheen -->
+          <div class="crest-light-sheen"></div>
+
+          <!-- Traveling Starburst Glint -->
+          <div class="aheera-starburst-flare">
+            <div class="flare-halo"></div>
+            <div class="flare-anamorphic-beam"></div>
+            <div class="flare-star-cross">
+              <div class="star-ray r-horizontal"></div>
+              <div class="star-ray r-vertical"></div>
+              <div class="star-ray r-diag1"></div>
+              <div class="star-ray r-diag2"></div>
+            </div>
+            <div class="flare-core-dot"></div>
+          </div>
+        </div>
+
+        <!-- Bottom Brand Reveal Text -->
+        <div class="lottie-luxury-overlay" id="animBrandBlock">
+          <h2 class="anim-brand-title">Aheera Store</h2>
+          <span class="anim-brand-sub">Pure Organic Dairy · Giridih</span>
+        </div>
+      </div>
+      <button class="btn-replay" onclick="replayAnimation()">↻ Replay Animation</button>
+    </div>
+  </div>
+
+  <script>
+    let anim = null;
+
+    function playAnim() {
+      const container = document.getElementById('aheeraLottiePlayer');
+      const textBlock = document.getElementById('animBrandBlock');
+      const flareStage = document.getElementById('aheeraFlareStage');
+      container.innerHTML = '';
+      if (textBlock) textBlock.classList.remove('is-visible');
+      if (flareStage) flareStage.classList.remove('is-active');
+
+      anim = lottie.loadAnimation({
+        container: container,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: './aheera_welcome_lottie.json'
+      });
+
+      anim.addEventListener('enterFrame', (e) => {
+        // When frame reaches 46 (~1.5s), fade in bottom text & start starburst flare
+        if (e.currentTime >= 46) {
+          if (textBlock && !textBlock.classList.contains('is-visible')) textBlock.classList.add('is-visible');
+          if (flareStage && !flareStage.classList.contains('is-active')) flareStage.classList.add('is-active');
+        }
+        if (e.currentTime < 10) {
+          if (textBlock && textBlock.classList.contains('is-visible')) textBlock.classList.remove('is-visible');
+          if (flareStage && flareStage.classList.contains('is-active')) flareStage.classList.remove('is-active');
+        }
+      });
+    }
+
+    function replayAnimation() {
+      if (anim) {
+        anim.goToAndPlay(0, true);
+        const textBlock = document.getElementById('animBrandBlock');
+        const flareStage = document.getElementById('aheeraFlareStage');
+        if (textBlock) textBlock.classList.remove('is-visible');
+        if (flareStage) flareStage.classList.remove('is-active');
+      } else {
+        playAnim();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', playAnim);
+  </script>
+</body>
+</html>
