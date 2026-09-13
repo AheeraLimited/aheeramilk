@@ -3016,6 +3016,210 @@
     }
 
     /* ═════════════════════════════════════════════════════════════════
+       DELETE HOUSEHOLD CONFIRMATION MODAL
+       ═════════════════════════════════════════════════════════════════ */
+    .del-confirm-modal-box {
+      max-width: 450px !important;
+      border: 1.5px solid rgba(224, 78, 78, 0.45) !important;
+      background: linear-gradient(180deg, rgba(22, 38, 28, 0.98) 0%, rgba(12, 24, 17, 0.98) 100%) !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(224, 78, 78, 0.2) !important;
+      border-radius: var(--radius-xl);
+      padding: 24px 22px !important;
+      animation: delModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes delModalPop {
+      0% { transform: scale(0.94); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .del-confirm-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .del-confirm-icon-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(224, 78, 78, 0.15);
+      border: 1.5px solid rgba(224, 78, 78, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FF6B6B;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .del-confirm-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.22rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 0 0 3px 0;
+      letter-spacing: -0.01em;
+    }
+    .del-confirm-subtitle {
+      font-size: 0.82rem;
+      color: #9FB8A6;
+      margin: 0;
+    }
+    .del-confirm-hh-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .del-confirm-hh-name {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: var(--gold-bright);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin-bottom: 4px;
+    }
+    .del-confirm-hh-meta {
+      font-size: 0.82rem;
+      color: #A3C5AF;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .del-confirm-warning-box {
+      background: rgba(224, 78, 78, 0.1);
+      border: 1px solid rgba(224, 78, 78, 0.35);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 20px;
+    }
+    .del-confirm-warning-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #FF7B7B;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .del-confirm-warning-msg {
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #E6E1D8;
+      margin: 0;
+    }
+    .del-confirm-warning-msg strong {
+      color: #FFB3B3;
+      font-weight: 700;
+    }
+    .del-confirm-actions-row {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-del-cancel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-md);
+      color: #E2DDD5;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-del-cancel:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+    }
+    .btn-del-execute {
+      flex: 1.35;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+      border: 1px solid #EF4444;
+      border-radius: var(--radius-md);
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+      transition: all 0.15s ease;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-del-execute:hover {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      box-shadow: 0 6px 22px rgba(220, 38, 38, 0.55);
+      transform: translateY(-1px);
+    }
+
+    /* Light Theme overrides for Delete Modal */
+    body.light-theme .del-confirm-modal-box,
+    html[data-theme="light"] .del-confirm-modal-box {
+      background: #FAF7F0 !important;
+      border: 1.5px solid rgba(220, 38, 38, 0.45) !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25), 0 0 25px rgba(220, 38, 38, 0.12) !important;
+    }
+    body.light-theme .del-confirm-title,
+    html[data-theme="light"] .del-confirm-title {
+      color: #111827 !important;
+    }
+    body.light-theme .del-confirm-subtitle,
+    html[data-theme="light"] .del-confirm-subtitle {
+      color: #6B7280 !important;
+    }
+    body.light-theme .del-confirm-hh-card,
+    html[data-theme="light"] .del-confirm-hh-card {
+      background: #F2ECE0 !important;
+      border: 1px solid rgba(14, 42, 25, 0.12) !important;
+    }
+    body.light-theme .del-confirm-hh-name,
+    html[data-theme="light"] .del-confirm-hh-name {
+      color: #0E2A19 !important;
+    }
+    body.light-theme .del-confirm-hh-meta,
+    html[data-theme="light"] .del-confirm-hh-meta {
+      color: #4B5D51 !important;
+    }
+    body.light-theme .del-confirm-warning-box,
+    html[data-theme="light"] .del-confirm-warning-box {
+      background: rgba(220, 38, 38, 0.07) !important;
+      border: 1px solid rgba(220, 38, 38, 0.28) !important;
+    }
+    body.light-theme .del-confirm-warning-head,
+    html[data-theme="light"] .del-confirm-warning-head {
+      color: #DC2626 !important;
+    }
+    body.light-theme .del-confirm-warning-msg,
+    html[data-theme="light"] .del-confirm-warning-msg {
+      color: #374151 !important;
+    }
+    body.light-theme .del-confirm-warning-msg strong,
+    html[data-theme="light"] .del-confirm-warning-msg strong {
+      color: #991B1B !important;
+    }
+    body.light-theme .btn-del-cancel,
+    html[data-theme="light"] .btn-del-cancel {
+      background: #E8E0CF !important;
+      border: 1px solid rgba(14, 42, 25, 0.18) !important;
+      color: #374151 !important;
+    }
+    body.light-theme .btn-del-cancel:hover,
+    html[data-theme="light"] .btn-del-cancel:hover {
+      background: #DDD4C1 !important;
+      color: #111827 !important;
+    }
+
+    /* ═════════════════════════════════════════════════════════════════
        UNIVERSAL HOUSEHOLD INTELLIGENCE & SEARCH MODAL (MINIMAL & ULTRA-CLEAN)
        ═════════════════════════════════════════════════════════════════ */
     .hh-search-modal-backdrop {
@@ -7399,6 +7603,51 @@
   </div>
 
   <!-- ═════════════════════════════════════════════════════════════════
+       DELETE HOUSEHOLD CONFIRMATION MODAL
+       ═════════════════════════════════════════════════════════════════ -->
+  <div id="deleteHouseholdConfirmModal" class="edit-modal-backdrop" onclick="if(event.target===this) closeDeleteHouseholdModal()">
+    <div class="edit-modal-box del-confirm-modal-box">
+      <div class="del-confirm-header">
+        <div class="del-confirm-icon-circle">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div style="flex:1;">
+          <h3 class="del-confirm-title">Delete Household?</h3>
+          <p class="del-confirm-subtitle">Permanent action — please confirm below</p>
+        </div>
+        <button class="btn-clear-search" onclick="closeDeleteHouseholdModal()" title="Close" aria-label="Close" style="background:transparent; border:none; color:inherit; font-size:1.4rem; cursor:pointer; opacity:0.7; padding:0 4px;">&times;</button>
+      </div>
+
+      <!-- Household Identity Card -->
+      <div class="del-confirm-hh-card">
+        <div class="del-confirm-hh-name" id="delModalHhName">—</div>
+        <div class="del-confirm-hh-meta" id="delModalHhMeta">—</div>
+      </div>
+
+      <!-- Data Deletion Intimation & Warning Box -->
+      <div class="del-confirm-warning-box">
+        <div class="del-confirm-warning-head">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>Data Deletion Notice</span>
+        </div>
+        <p class="del-confirm-warning-msg">
+          Deleting <strong id="delModalHhNameStrong">this household</strong> will permanently remove all associated route subscriptions, historical daily delivery logs, monthly billing calculations, dues records, and customer contact data.
+        </p>
+      </div>
+
+      <!-- Confirm / Cancel Actions -->
+      <div class="del-confirm-actions-row">
+        <button type="button" class="btn-del-cancel" onclick="closeDeleteHouseholdModal()">
+          <i class="fa-solid fa-xmark"></i> Cancel / Keep
+        </button>
+        <button type="button" class="btn-del-execute" id="btnExecuteDeleteHh" onclick="executeDeleteHousehold()">
+          <i class="fa-solid fa-trash-can"></i> Delete Permanently
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════
        UNIVERSAL HOUSEHOLD INTELLIGENCE & SEARCH MODAL
        ═════════════════════════════════════════════════════════════════ -->
   <div id="householdSearchModal" class="edit-modal-backdrop hh-search-modal-backdrop" onclick="if(event.target===this) closeHouseholdSearchModal()">
@@ -8359,7 +8608,7 @@
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 <button class="btn-action-square btn-action-del" onclick="deleteHousehold('${h.id}')" title="Delete Household">
-                  <i class="fa-solid fa-xmark"></i>
+                  <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
             </div>
@@ -8466,15 +8715,60 @@
       }
     };
 
+    window.pendingDeleteHhId = null;
+
     window.deleteHousehold = function(hhId) {
       const h = window.households.find(x => x.id === hhId);
       if (!h) return;
-      if (!confirm('Remove ' + h.name + ' from delivery route?')) return;
+      window.pendingDeleteHhId = hhId;
+
+      const nameEl = document.getElementById('delModalHhName');
+      const nameStrongEl = document.getElementById('delModalHhNameStrong');
+      const metaEl = document.getElementById('delModalHhMeta');
+
+      if (nameEl) nameEl.textContent = h.name || 'Household';
+      if (nameStrongEl) nameStrongEl.textContent = h.name || 'this household';
+      if (metaEl) {
+        const qtyStr = (h.defaultQty || h.qty || 1.0) + ' L/day';
+        const rateStr = '₹' + (h.ratePerUnit || h.rate || 60) + '/L';
+        const addrStr = h.address ? h.address : 'Giridih';
+        const phoneStr = h.phone ? ' · ' + h.phone : '';
+        const slotName = (h.slot === 'both') ? 'Both Slots' : ((h.slot === 'evening') ? 'Evening' : 'Morning');
+        metaEl.innerHTML = `
+          <div><i class="fa-solid fa-location-dot" style="color:#E04E4E; font-size:11px; margin-right:5px;"></i><span>${addrStr}${phoneStr}</span></div>
+          <div><i class="fa-solid fa-droplet" style="color:#56BAEC; font-size:11px; margin-right:5px;"></i><span>${qtyStr} (${rateStr}) · ${slotName}</span></div>
+        `;
+      }
+
+      const modal = document.getElementById('deleteHouseholdConfirmModal');
+      if (modal) modal.classList.add('is-open');
+    };
+
+    window.closeDeleteHouseholdModal = function() {
+      const modal = document.getElementById('deleteHouseholdConfirmModal');
+      if (modal) modal.classList.remove('is-open');
+      window.pendingDeleteHhId = null;
+    };
+
+    window.executeDeleteHousehold = function() {
+      const hhId = window.pendingDeleteHhId;
+      if (!hhId) {
+        window.closeDeleteHouseholdModal();
+        return;
+      }
+      const h = window.households.find(x => x.id === hhId);
+      const hName = h ? h.name : 'Household';
+
       window.households = window.households.filter(x => x.id !== hhId);
       localStorage.setItem('aheera_households_master', JSON.stringify(window.households));
+      
+      window.closeDeleteHouseholdModal();
       window.renderActiveViews();
       if (window.cloudSyncHouseholds) window.cloudSyncHouseholds();
-      window.showToast('Household removed from route');
+      if (document.getElementById('householdSearchModal') && document.getElementById('householdSearchModal').classList.contains('is-open') && window.filterHouseholdSearch) {
+        window.filterHouseholdSearch();
+      }
+      window.showToast(hName + ' permanently deleted');
     };
 
     window.toggleAddForm = function() {
@@ -11453,6 +11747,9 @@
               </button>
               <button class="btn-hh-action-gold" onclick="window.sendHouseholdWhatsAppBill('${h.id}')" title="Send Monthly Bill Statement on WhatsApp">
                 <i class="fa-brands fa-whatsapp"></i> Send Bill
+              </button>
+              <button class="btn-hh-action" onclick="window.deleteHousehold('${h.id}')" title="Delete Household" style="color:#FF7B7B;">
+                <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
           </div>
