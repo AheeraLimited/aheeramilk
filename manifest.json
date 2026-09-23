@@ -1,9 +1,9 @@
 {
-  "name": "Aheera Admin — Operations Console",
-  "short_name": "Aheera Admin",
-  "description": "Aheera Pure Organic Dairy — Unified Operations, Household Dispatch & Partner Console",
-  "id": "aheera-admin-console-v3",
-  "start_url": "./admin.html?pwa=admin",
+  "name": "Aheera Store — Pure Organic Dairy & Farm Foods",
+  "short_name": "Aheera Store",
+  "description": "Pure A2 Desi Cow Milk, Hand-Churned Vedic Ghee, Fresh Morning Paneer & Organic Farm Foods delivered to your doorstep from our Giridih farm.",
+  "id": "aheera-customer-store-v3",
+  "start_url": "./index.html?pwa=store",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
@@ -38,14 +38,14 @@
   ],
   "shortcuts": [
     {
-      "name": "Live Dispatch Run",
-      "url": "./admin.html?pwa=admin",
-      "description": "Daily morning & evening delivery runs"
+      "name": "Order Farm Dairy",
+      "url": "./index.html#catalogControlsWrap",
+      "description": "Order fresh Vedic ghee, paneer, and farm dairy"
     },
     {
-      "name": "Products & Stock",
-      "url": "./admin.html?pwa=admin",
-      "description": "Manage catalog products and inventory"
+      "name": "Track Orders",
+      "url": "./index.html#screen-tracking",
+      "description": "Track your live delivery status"
     }
   ]
 }

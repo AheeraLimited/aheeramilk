@@ -8762,6 +8762,18 @@
       window.households = window.households.filter(x => x.id !== hhId);
       localStorage.setItem('aheera_households_master', JSON.stringify(window.households));
       
+      const todayKey = window.getTodayKey();
+      if (window.todayDeliveries && window.todayDeliveries[hhId]) {
+        delete window.todayDeliveries[hhId];
+        localStorage.setItem('aheera_del_' + todayKey, JSON.stringify(window.todayDeliveries));
+        if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
+      }
+      if (window.todaySkips && window.todaySkips[hhId]) {
+        delete window.todaySkips[hhId];
+        localStorage.setItem('aheera_skips_' + todayKey, JSON.stringify(window.todaySkips));
+        if (window.cloudSyncSkips) window.cloudSyncSkips();
+      }
+
       window.closeDeleteHouseholdModal();
       window.renderActiveViews();
       if (window.cloudSyncHouseholds) window.cloudSyncHouseholds();
@@ -8803,7 +8815,16 @@
 
       const newEntry = {
         id: 'HH-' + Date.now().toString().slice(-6),
-        name, address: addr, phone, defaultQty: qty, qty, ratePerUnit: rate, rate, slot
+        name,
+        address: addr,
+        phone,
+        defaultQty: qty,
+        qty: qty,
+        ratePerUnit: rate,
+        rate: rate,
+        slot,
+        startDate: window.getTodayKey(),
+        createdAt: new Date().toISOString()
       };
 
       window.households.push(newEntry);
@@ -9359,11 +9380,9 @@
       window.playChime();
       const t = window.staffTranslations[window.staffLang] || window.staffTranslations.en;
       window.showToast(t.toastDelivered);
-      window.renderStaffRouteCards();
-      window.updateStaffProgress();
-      window.updateAdminKpis();
-      window.loadDailyLogs();
+      window.renderActiveViews();
       if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
+      if (window.currentStaffTab === 'history' && window.renderStaffHistoryUI) window.renderStaffHistoryUI();
     };
 
     window.undoStaffDelivery = function(hhId) {
@@ -9372,12 +9391,9 @@
       localStorage.setItem('aheera_del_' + todayKey, JSON.stringify(window.todayDeliveries));
       const t = window.staffTranslations[window.staffLang] || window.staffTranslations.en;
       window.showToast(t.toastReverted);
-      window.renderStaffRouteCards();
-      window.updateStaffProgress();
-      window.updateAdminKpis();
-      window.loadDailyLogs();
+      window.renderActiveViews();
       if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
-      if (window.currentStaffTab === 'history') window.renderStaffHistoryUI();
+      if (window.currentStaffTab === 'history' && window.renderStaffHistoryUI) window.renderStaffHistoryUI();
     };
 
     // ═════════════════════════════════════════════════════════════════
@@ -10366,9 +10382,7 @@
       }
 
       localStorage.setItem('aheera_del_' + todayKey, JSON.stringify(window.todayDeliveries));
-      window.renderDashboard();
-      window.renderStaffRouteCards();
-      window.updateStaffProgress();
+      window.renderActiveViews();
       if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(todayKey);
     };
 
@@ -10631,7 +10645,7 @@
 
     window.toggleDailyLogDelivery = function(hhId) {
       const isToday = window.logSelectedDate === window.getTodayKey();
-      let delMap = window.todayDeliveries;
+      let delMap = isToday ? (window.todayDeliveries || {}) : {};
 
       if (!isToday) {
         try {
@@ -10661,16 +10675,13 @@
       localStorage.setItem('aheera_del_' + window.logSelectedDate, JSON.stringify(delMap));
       if (isToday) window.todayDeliveries = delMap;
 
-      window.loadDailyLogs();
-      window.renderStaffRouteCards();
-      window.updateStaffProgress();
-      window.updateAdminKpis();
+      window.renderActiveViews();
       if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(window.logSelectedDate);
     };
 
     window.updateDailyLogQty = function(hhId, newQty) {
       const isToday = window.logSelectedDate === window.getTodayKey();
-      let delMap = window.todayDeliveries;
+      let delMap = isToday ? (window.todayDeliveries || {}) : {};
 
       if (!isToday) {
         try {
@@ -10692,10 +10703,7 @@
       if (isToday) window.todayDeliveries = delMap;
 
       window.showToast(`Quantity set to ${val.toFixed(1)} L`);
-      window.loadDailyLogs();
-      window.renderStaffRouteCards();
-      window.updateStaffProgress();
-      window.updateAdminKpis();
+      window.renderActiveViews();
       if (window.cloudSyncDeliveries) window.cloudSyncDeliveries(window.logSelectedDate);
     };
 
@@ -10806,15 +10814,18 @@
 
         let dayDelMap = {};
         if (dateKey === todayKey) {
-          dayDelMap = window.todayDeliveries;
+          dayDelMap = window.todayDeliveries || {};
         } else {
           try {
             const saved = localStorage.getItem('aheera_del_' + dateKey);
-            dayDelMap = saved ? JSON.parse(saved) : null;
-          } catch(e) { dayDelMap = null; }
+            dayDelMap = saved ? JSON.parse(saved) : {};
+          } catch(e) { dayDelMap = {}; }
         }
 
         targetHouseholds.forEach(h => {
+          // If household was registered after this date, skip past calculations
+          if (h.startDate && dateKey < h.startDate) return;
+
           let isDone = false;
           let qty = parseFloat(h.defaultQty || h.qty || 1.0);
           const rate = parseFloat(h.ratePerUnit || h.rate || 60);
@@ -10822,11 +10833,8 @@
           if (dayDelMap && dayDelMap[h.id]) {
             if (dayDelMap[h.id].status === 'delivered') {
               isDone = true;
-              qty = parseFloat(dayDelMap[h.id].qty || qty);
+              qty = parseFloat(dayDelMap[h.id].qty != null ? dayDelMap[h.id].qty : qty);
             }
-          } else if (dayDelMap === null) {
-            // Simulated historic scheduled log if day was not logged
-            isDone = true;
           }
 
           if (isDone) {
@@ -10942,16 +10950,17 @@
       for (let d = 1; d <= days; d++) {
         const dateKey = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         if (dateKey > todayKey) continue;
+        if (h0.startDate && dateKey < h0.startDate) continue;
 
         let isDone = false;
         let qty = parseFloat(h0.defaultQty || h0.qty || 1.0);
         const rate = parseFloat(h0.ratePerUnit || h0.rate || 60);
 
         if (dateKey === todayKey) {
-          const rec = window.todayDeliveries[h0.id];
+          const rec = window.todayDeliveries ? window.todayDeliveries[h0.id] : null;
           if (rec && rec.status === 'delivered') {
             isDone = true;
-            qty = parseFloat(rec.qty || qty);
+            qty = parseFloat(rec.qty != null ? rec.qty : qty);
           }
         } else {
           try {
@@ -10960,12 +10969,10 @@
               const pastMap = JSON.parse(saved);
               if (pastMap[h0.id] && pastMap[h0.id].status === 'delivered') {
                 isDone = true;
-                qty = parseFloat(pastMap[h0.id].qty || qty);
+                qty = parseFloat(pastMap[h0.id].qty != null ? pastMap[h0.id].qty : qty);
               }
-            } else {
-              isDone = true; // Historical quota
             }
-          } catch(e) { isDone = true; }
+          } catch(e) {}
         }
 
         if (isDone) {
@@ -11377,24 +11384,72 @@
       const h = window.households.find(x => x.id === hhId);
       if (!h) return;
 
-      const monthVal = selMonth ? selMonth.value : new Date().toISOString().slice(0, 7);
+      const monthVal = (selMonth ? selMonth.value : '') || new Date().toISOString().slice(0, 7);
       const [year, month] = monthVal.split('-').map(Number);
       const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
       const monthTitle = `${monthNames[month]} ${year}`;
-      const qty = parseFloat(h.defaultQty || h.qty || 1.0);
+      const defaultQty = parseFloat(h.defaultQty || h.qty || 1.0);
       const rate = parseFloat(h.ratePerUnit || h.rate || 60);
-      const days = new Date(year, month, 0).getDate();
-      const totalLitres = qty * days;
-      const subtotal = totalLitres * rate;
-      const prevDue = extraDueEl ? (parseFloat(extraDueEl.value) || 0) : 0;
-      const grandTotal = subtotal + prevDue;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const todayKey = window.getTodayKey();
 
-      let dueText = '';
-      if (prevDue > 0) {
-        dueText = `\n• Current Month Milk: ₹${subtotal.toLocaleString('en-IN')}\n• Previous Balance / Extra Due: ₹${prevDue.toLocaleString('en-IN')}`;
+      let deliveredLitres = 0;
+      let deliveredDays = 0;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (dateKey > todayKey) continue;
+        if (h.startDate && dateKey < h.startDate) continue;
+
+        let isDone = false;
+        let dayQty = defaultQty;
+
+        if (dateKey === todayKey) {
+          const rec = window.todayDeliveries ? window.todayDeliveries[h.id] : null;
+          if (rec && rec.status === 'delivered') {
+            isDone = true;
+            dayQty = parseFloat(rec.qty != null ? rec.qty : defaultQty);
+          }
+        } else {
+          try {
+            const saved = localStorage.getItem('aheera_del_' + dateKey);
+            if (saved) {
+              const pastMap = JSON.parse(saved);
+              if (pastMap[h.id] && pastMap[h.id].status === 'delivered') {
+                isDone = true;
+                dayQty = parseFloat(pastMap[h.id].qty != null ? pastMap[h.id].qty : defaultQty);
+              }
+            }
+          } catch(e) {}
+        }
+
+        if (isDone) {
+          deliveredLitres += dayQty;
+          deliveredDays++;
+        }
       }
 
-      const text = `Namaste ${h.name} Ji,\nHere is your Aheera Pure Cow Milk monthly bill for ${monthTitle}:\n• Daily Quota: ${qty.toFixed(1)} L/day (${(h.slot||'morning').toUpperCase()})\n• Total Delivered: ${totalLitres.toFixed(1)} Litres (${days} Days)\n• Rate: ₹${rate}/L${dueText}\n• Total Amount Payable: ₹${grandTotal.toLocaleString('en-IN')}\n\nPlease pay via UPI to 7992360814@ibl.\nThank you for choosing Aheera Pure Vaidik Dairy, Giridih!`;
+      let previousDue = 0;
+      try {
+        const savedDueMap = JSON.parse(localStorage.getItem('aheera_household_dues') || '{}');
+        if (hhId && savedDueMap[hhId] !== undefined) {
+          previousDue = parseFloat(savedDueMap[hhId]) || 0;
+        } else if (extraDueEl) {
+          previousDue = parseFloat(extraDueEl.value) || 0;
+        }
+      } catch(e) {
+        previousDue = extraDueEl ? (parseFloat(extraDueEl.value) || 0) : 0;
+      }
+
+      const subtotal = deliveredLitres * rate;
+      const grandTotal = subtotal + previousDue;
+
+      let dueText = '';
+      if (previousDue > 0) {
+        dueText = `\n• Current Month Milk: ₹${subtotal.toLocaleString('en-IN')}\n• Previous Balance / Extra Due: ₹${previousDue.toLocaleString('en-IN')}`;
+      }
+
+      const text = `Namaste ${h.name} Ji,\nHere is your Aheera Pure Cow Milk monthly bill statement for ${monthTitle}:\n\n• Daily Quota: ${defaultQty.toFixed(1)} L/day (${(h.slot||'morning').toUpperCase()})\n• Deliveries Completed: ${deliveredDays} Days\n• Total Milk Delivered: ${deliveredLitres.toFixed(1)} Litres\n• Rate: ₹${rate}/L${dueText}\n• Total Amount Payable: ₹${grandTotal.toLocaleString('en-IN')}\n\nPlease pay via UPI to 7992360814@ibl.\nThank you for choosing Aheera Pure Vaidik Dairy, Giridih!`;
       
       const cleanPhone = window.cleanWaPhone(h.phone);
       if (!cleanPhone) {
@@ -11508,6 +11563,7 @@
       for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         if (dateKey > todayKey) continue; // Future days
+        if (household.startDate && dateKey < household.startDate) continue;
 
         scheduledDays++;
         let isDelivered = false;
@@ -11517,7 +11573,7 @@
           if (window.todayDeliveries && window.todayDeliveries[household.id]) {
             if (window.todayDeliveries[household.id].status === 'delivered') {
               isDelivered = true;
-              dayQty = parseFloat(window.todayDeliveries[household.id].qty || defaultQty);
+              dayQty = parseFloat(window.todayDeliveries[household.id].qty != null ? window.todayDeliveries[household.id].qty : defaultQty);
             }
           }
         } else {
@@ -11527,14 +11583,10 @@
               const pastMap = JSON.parse(saved);
               if (pastMap[household.id] && pastMap[household.id].status === 'delivered') {
                 isDelivered = true;
-                dayQty = parseFloat(pastMap[household.id].qty || defaultQty);
+                dayQty = parseFloat(pastMap[household.id].qty != null ? pastMap[household.id].qty : defaultQty);
               }
-            } else {
-              isDelivered = true;
             }
-          } catch(e) {
-            isDelivered = true;
-          }
+          } catch(e) {}
         }
 
         if (isDelivered) {
@@ -13447,13 +13499,17 @@
         }
       }, err => console.warn(err));
 
-      onSnapshot(doc(db, "artifacts", "aheera-milk", "public", "data", "deliveries", todayKey), (snap) => {
-        if (snap.exists()) {
-          window.todayDeliveries = snap.data();
-          localStorage.setItem('aheera_del_' + todayKey, JSON.stringify(window.todayDeliveries));
-          window.renderActiveViews();
-        }
-      }, err => console.warn(err));
+      onSnapshot(collection(db, "artifacts", "aheera-milk", "public", "data", "deliveries"), (snap) => {
+        snap.forEach(d => {
+          const dateKey = d.id;
+          const data = d.data() || {};
+          localStorage.setItem('aheera_del_' + dateKey, JSON.stringify(data));
+          if (dateKey === window.getTodayKey()) {
+            window.todayDeliveries = data;
+          }
+        });
+        window.renderActiveViews();
+      }, err => console.warn("Deliveries collection sync note:", err));
 
       onSnapshot(doc(db, "artifacts", "aheera-milk", "public", "data", "skips", todayKey), (snap) => {
         if (snap.exists()) {
